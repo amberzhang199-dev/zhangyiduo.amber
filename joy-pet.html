@@ -1359,7 +1359,7 @@ function renderChat(){
 
   /* 喂养 Plan 入口按钮 */
   var planBtn=el('button','ib gh');planBtn.title='喂养规划';
-  planBtn.innerHTML='<span style="font-size:14px">\uD83C\uDF7D</span>';
+  planBtn.innerHTML='<span style="font-size:14px">\uD83D\uDCB0</span>';
   planBtn.onclick=function(){showFeedingPlanPanel(pets);};
   leftBtns.appendChild(planBtn);
 
@@ -2401,22 +2401,24 @@ function showBudgetPanel(pets,defaultPet){
   mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.38);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
 
   var panel=document.createElement('div');
+  var _ph=Math.min(window.innerHeight*0.82,580);
   panel.style.cssText=[
     'background:#FAF6F0',
+    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\'%3E%3Cfilter id=\'f\'%3E%3CfeTurbulence baseFrequency=\'.5\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'80\' height=\'80\' filter=\'url(%23f)\' opacity=\'.018\'/%3E%3C/svg%3E")',
     'border-radius:28px',
     'width:100%',
-    'max-width:340px',
-    'max-height:82vh',
+    'max-width:350px',
+    'height:'+_ph+'px',
     'display:flex',
     'flex-direction:column',
     'overflow:hidden',
-    'box-shadow:0 16px 48px rgba(74,62,61,0.14),0 3px 10px rgba(74,62,61,0.06)',
+    'box-shadow:0 20px 56px rgba(74,62,61,0.14),0 4px 14px rgba(74,62,61,0.07)',
     'animation:springIn .42s cubic-bezier(.34,1.56,.64,1) both'
   ].join(';');
 
   /* 标题栏 */
   var hdr=document.createElement('div');
-  hdr.style.cssText='flex-shrink:0;padding:16px 16px 12px;border-bottom:1px solid #EDE5DA;background:linear-gradient(135deg,#FFFDF9,#FFF9F2);position:relative;overflow:hidden';
+  hdr.style.cssText='flex-shrink:0;padding:16px 16px 12px;background:linear-gradient(135deg,#FFFDF5,#FFF7ED);position:relative;overflow:hidden;box-shadow:0 1px 8px rgba(74,62,61,0.05)';
   hdr.innerHTML='<div style="position:absolute;right:12px;top:6px;font-size:28px;opacity:.06;transform:rotate(18deg);pointer-events:none">🐾</div>'
     +'<div style="position:absolute;right:30px;top:22px;font-size:16px;opacity:.05;transform:rotate(-12deg);pointer-events:none">🐾</div>'
     +'<div style="display:flex;align-items:center;gap:9px">'
@@ -2435,7 +2437,7 @@ function showBudgetPanel(pets,defaultPet){
     pets.forEach(function(p){
       var isA=(p.id===activePet.id);
       var tab=document.createElement('div');
-      tab.style.cssText='flex:1;text-align:center;padding:6px 0;border-radius:10px;border:1.5px solid '+(isA?'#DFA06E':'#E8DDD0')+';background:'+(isA?'rgba(223,160,110,0.12)':'#FAF6F0')+';color:'+(isA?'#C88A5A':'#B8AFA6')+';font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s';
+      tab.style.cssText='flex:1;text-align:center;padding:7px 0;border-radius:12px;background:'+(isA?'linear-gradient(135deg,rgba(240,170,120,0.18),rgba(240,170,120,0.08))':'rgba(74,62,61,0.04)')+';color:'+(isA?'#D98A58':'#B8AFA6')+';font-size:11.5px;font-weight:700;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:'+(isA?'0 3px 10px rgba(223,160,110,0.15)':'none');
       tab.textContent=(p.species==='cat'?'🐱':'🐶')+' '+p.name;
       tab.onclick=function(){activePet=p;rebuildContent();};
       tabBar.appendChild(tab);
@@ -2464,10 +2466,10 @@ function showBudgetPanel(pets,defaultPet){
 
     /* 输入框 */
     var inputWrap=document.createElement('div');inputWrap.style.cssText='margin-bottom:14px';
-    var lbl=document.createElement('p');lbl.style.cssText='font-size:11px;font-weight:700;color:#8A8078;margin-bottom:6px';lbl.textContent='💰 每月可支出预算';inputWrap.appendChild(lbl);
+    var lbl=document.createElement('p');lbl.style.cssText='font-size:11px;font-weight:700;color:#7A6E68;margin-bottom:6px';lbl.textContent='💰 每月可支出预算';inputWrap.appendChild(lbl);
     var inputRow=document.createElement('div');inputRow.style.cssText='display:flex;gap:8px;align-items:center';
     var inp=document.createElement('input');inp.type='number';inp.placeholder='填写每月喂养可支出金额';inp.value=saved||'';
-    inp.style.cssText='flex:1;padding:11px 14px;border-radius:14px;border:1.5px solid #EDE5DA;background:#fff;font-size:14px;font-weight:700;color:#4A3E3D;outline:none;transition:.2s;box-sizing:border-box';
+    inp.style.cssText='flex:1;padding:11px 14px;border-radius:16px;border:none;background:rgba(255,253,249,0.9);box-shadow:0 2px 8px rgba(74,62,61,0.07),inset 0 1px 3px rgba(74,62,61,0.04);font-size:14px;font-weight:700;color:#4A3E3D;outline:none;transition:.2s cubic-bezier(.34,1.56,.64,1);box-sizing:border-box';
     inp.onfocus=function(){inp.style.borderColor='rgba(223,160,110,0.6)';inp.style.boxShadow='0 0 0 3px rgba(223,160,110,0.1)';};
     inp.onblur=function(){inp.style.borderColor='#EDE5DA';inp.style.boxShadow='none';};
     var saveBtn=document.createElement('button');
@@ -2513,14 +2515,14 @@ function showBudgetPanel(pets,defaultPet){
 
     skus.forEach(function(sku){
       var card=document.createElement('div');
-      card.style.cssText='background:linear-gradient(135deg,#FFFDF8,#FFF9F2);border-radius:20px;padding:11px 13px;margin-bottom:10px;box-shadow:0 6px 18px rgba(74,62,61,0.08),0 1px 4px rgba(74,62,61,0.04);transition:.18s;overflow:hidden';
+      card.style.cssText='background:linear-gradient(135deg,#FFFDF7,#FFF8EE);border-radius:20px;padding:12px 14px;margin-bottom:10px;box-shadow:0 8px 22px rgba(74,62,61,0.09),0 2px 6px rgba(74,62,61,0.04);transition:all .2s cubic-bezier(.34,1.56,.64,1);overflow:hidden';
       /* 标签 */
       var tagSpan='<span style="display:inline-block;font-size:8.5px;background:rgba('+(sku.cat==='food'?'223,160,110':sku.cat==='toy'?'122,158,142':'180,160,140')+',0.14);color:'+(sku.cat==='food'?'#C88A5A':sku.cat==='toy'?'#5C8070':'#8A7A6A')+';padding:2px 7px;border-radius:99px;font-weight:700;margin-bottom:6px">'+sku.emoji+' '+(sku.cat==='food'?'饮食':sku.cat==='toy'?'玩乐':'用品')+'</span>';
       var topRow='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'
         +'<div style="flex:1;min-width:0">'
         +tagSpan
         +'<p style="font-size:12px;font-weight:700;color:#4A3E3D;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+sku.name+'</p>'
-        +'<p style="font-size:9.5px;color:#B8AFA6;margin-top:2px">'+sku.brand+(sku.weight?' · '+sku.weight:'')+'</p>'
+        +'<p style="font-size:9px;color:#C8C0B8;margin-top:2px">'+sku.brand+(sku.weight?' · '+sku.weight:'')+'</p>'
         +'</div>'
         +'<p style="font-size:16px;font-weight:800;color:#E57539;flex-shrink:0">\xA5'+sku.price+'</p>'
         +'</div>';
