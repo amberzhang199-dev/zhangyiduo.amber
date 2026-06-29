@@ -1333,6 +1333,12 @@ function renderChat(){
   leftBtns.appendChild(camBtn);
   leftBtns.appendChild(imgInput);
 
+  /* 喂养 Plan 入口按钮 */
+  var planBtn=el('button','ib gh');planBtn.title='喂养规划';
+  planBtn.innerHTML='<span style="font-size:14px">\uD83C\uDF7D</span>';
+  planBtn.onclick=function(){showFeedingPlanPanel(pets);};
+  leftBtns.appendChild(planBtn);
+
   ibar.appendChild(leftBtns);
 
   var inp=document.createElement('input');
@@ -2218,6 +2224,254 @@ function detectAndSaveAccounting(text,pets){
 /* ══════════════════════════════════════════════════
    RILI PAGE — 宠物日历渲染
    ══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   FEEDING PLAN — 喂养规划系统
+   ══════════════════════════════════════════════════ */
+
+/* 京东粮品 SKU 库 */
+var JD_SKU_DB={
+  cat:{
+    kitten:[
+      {id:'ck1',name:'皇家幼猫粮K36',brand:'Royal Canin',weight:2,price:218,sku:'10021193',tag:'兽医推荐'},
+      {id:'ck2',name:'希尔斯幼猫粮',brand:'Hills希尔斯',weight:1.58,price:189,sku:'100013283',tag:'营养均衡'},
+      {id:'ck3',name:'耐威克无谷幼猫',brand:'Navarch',weight:3,price:128,sku:'100013284',tag:'性价比高'}
+    ],
+    adult:[
+      {id:'ca1',name:'皇家成猫粮F32',brand:'Royal Canin',weight:4,price:298,sku:'1666792',tag:'兽医首选'},
+      {id:'ca2',name:'渴望无谷成猫',brand:'Orijen渴望',weight:5.4,price:568,sku:'100007575',tag:'高蛋白'},
+      {id:'ca3',name:'冠能Pro成猫粮',brand:'Purina冠能',weight:7,price:338,sku:'100011451',tag:'热销'},
+      {id:'ca4',name:'麦富迪鲜肉猫粮',brand:'麦富迪',weight:4,price:178,sku:'100013290',tag:'鲜肉配方'}
+    ],
+    senior:[
+      {id:'cs1',name:'皇家老年猫+7',brand:'Royal Canin',weight:3.5,price:268,sku:'1666800',tag:'关节护理'},
+      {id:'cs2',name:'希尔斯老年猫',brand:'Hills希尔斯',weight:2,price:219,sku:'100013285',tag:'低磷配方'}
+    ]
+  },
+  dog:{
+    kitten:[
+      {id:'dk1',name:'皇家幼犬粮MED30',brand:'Royal Canin',weight:4,price:328,sku:'1666810',tag:'兽医推荐'},
+      {id:'dk2',name:'冠能幼犬成长粮',brand:'Purina冠能',weight:7.5,price:398,sku:'100011452',tag:'热销'},
+      {id:'dk3',name:'麦富迪幼犬粮',brand:'麦富迪',weight:5,price:158,sku:'100013286',tag:'性价比高'}
+    ],
+    adult:[
+      {id:'da1',name:'皇家成犬粮MAXI',brand:'Royal Canin',weight:10,price:488,sku:'1666820',tag:'兽医首选'},
+      {id:'da2',name:'渴望无谷成犬',brand:'Orijen渴望',weight:6,price:628,sku:'100007576',tag:'高蛋白'},
+      {id:'da3',name:'冠能Pro成犬粮',brand:'Purina冠能',weight:12,price:428,sku:'100011453',tag:'热销'},
+      {id:'da4',name:'比瑞吉无谷犬粮',brand:'比瑞吉',weight:5,price:228,sku:'100013291',tag:'无谷配方'}
+    ],
+    senior:[
+      {id:'ds1',name:'皇家老年犬+8',brand:'Royal Canin',weight:3.5,price:298,sku:'1666830',tag:'关节护理'},
+      {id:'ds2',name:'希尔斯老年犬',brand:'Hills希尔斯',weight:5.4,price:368,sku:'100013287',tag:'低脂配方'}
+    ]
+  }
+};
+
+var FOOD_PREF_TAGS=['无谷配方','高蛋白','低磷','鲜肉配方','进口品牌','性价比','冻干','湿粮优先'];
+
+function getFeedingPlan(petId){return loadUD('feeding_plan_'+petId,null);}
+function saveFeedingPlan(petId,plan){saveUD('feeding_plan_'+petId,plan);}
+function getFoodPurchases(petId){return loadUD('food_purchases_'+petId,[]);}
+function saveFoodPurchase(petId,record){var all=getFoodPurchases(petId);all.push(record);saveUD('food_purchases_'+petId,all);}
+
+function getAgeGroup(pet){var a=parseInt(pet.age)||0;return a<1?'kitten':a>=7?'senior':'adult';}
+function getDailyGrams(pet,plan){
+  var w=parseFloat(plan&&plan.weight||pet.weight)||( pet.species==='dog'?10:4);
+  var gr=getAgeGroup(pet);
+  if(pet.species==='cat'){return gr==='kitten'?Math.round(w*30):gr==='senior'?Math.round(w*20):Math.round(w*25);}
+  return gr==='kitten'?Math.round(w*60):gr==='senior'?Math.round(w*30):Math.round(w*40);
+}
+
+function matchSkus(pet,plan){
+  var sp=pet.species==='dog'?'dog':'cat';
+  var gr=getAgeGroup(pet);
+  var all=(JD_SKU_DB[sp][gr]||JD_SKU_DB[sp].adult).slice();
+  var prefs=plan&&plan.prefs||[];
+  var budget=parseFloat(plan&&plan.budget)||500;
+  /* 按偏好标签排序，再按预算过滤 */
+  all.sort(function(a,b){
+    var sa=prefs.some(function(p){return a.tag&&a.tag.indexOf(p)!==-1;})?-1:0;
+    var sb=prefs.some(function(p){return b.tag&&b.tag.indexOf(p)!==-1;})?-1:0;
+    return sa-sb;
+  });
+  return all;
+}
+
+function calcPurchasePlan(pet,plan){
+  var dailyG=getDailyGrams(pet,plan);
+  var budget=parseFloat(plan&&plan.budget)||500;
+  var skus=matchSkus(pet,plan);
+  var results=[];
+  skus.forEach(function(sku){
+    var daysPerBag=Math.floor(sku.weight*1000/dailyG);
+    var bagsPerMonth=Math.ceil(30/daysPerBag);
+    var monthlyCost=bagsPerMonth*sku.price;
+    results.push({sku:sku,daysPerBag:daysPerBag,bagsPerMonth:bagsPerMonth,monthlyCost:monthlyCost,withinBudget:monthlyCost<=budget});
+  });
+  return results;
+}
+
+/* 显示喂养 Plan 入口面板 */
+function showFeedingPlanPanel(pets){
+  var mask=document.createElement('div');
+  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.5);z-index:9998;display:flex;align-items:flex-end;justify-content:center';
+
+  var panel=document.createElement('div');
+  var panelH=Math.min(window.innerHeight*0.88,640);
+  panel.style.cssText='background:#FAF6F0;border-radius:24px 24px 0 0;width:100%;max-width:480px;height:'+panelH+'px;display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s cubic-bezier(.25,.8,.25,1) both';
+
+  /* 标题栏 */
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;flex-shrink:0;border-bottom:1px solid rgba(74,62,61,0.08)';
+  hdr.innerHTML='<div><p style="font-size:15px;font-weight:800;color:#4A3E3D">🍽 喂养规划</p><p style="font-size:10px;color:#A89E9D;margin-top:1px">制定采购方案，一键跳转京东下单</p></div>';
+  var closeBtn=document.createElement('button');
+  closeBtn.style.cssText='width:28px;height:28px;border-radius:50%;border:none;background:rgba(74,62,61,0.08);color:#7A6E6D;font-size:16px;cursor:pointer';
+  closeBtn.textContent='×';closeBtn.onclick=function(){mask.remove();};
+  hdr.appendChild(closeBtn);panel.appendChild(hdr);
+
+  /* 宠物切换标签（多宠时显示）*/
+  var activePet=pets[0];
+  var scroll=document.createElement('div');
+  scroll.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch';
+
+  function renderPlanContent(pet){
+    scroll.innerHTML='';
+    var plan=getFeedingPlan(pet.id)||{budget:'',weight:'',daily:'',prefs:[]};
+
+    /* 宠物标签切换栏 */
+    if(pets.length>1){
+      var tabs=document.createElement('div');
+      tabs.style.cssText='display:flex;gap:8px;padding:10px 16px 0;overflow-x:auto';
+      pets.forEach(function(p){
+        var tab=document.createElement('div');
+        var isActive=(p.id===pet.id);
+        tab.style.cssText='flex-shrink:0;padding:6px 14px;border-radius:99px;border:1.5px solid '+(isActive?'#DFA06E':'rgba(74,62,61,0.12)')+';background:'+(isActive?'rgba(223,160,110,0.12)':'transparent')+';color:'+(isActive?'#DFA06E':'#A89E9D')+';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap';
+        tab.textContent=(p.species==='cat'?'🐱':'🐶')+' '+p.name;
+        tab.onclick=function(){activePet=p;renderPlanContent(p);};
+        tabs.appendChild(tab);
+      });
+      scroll.appendChild(tabs);
+    }
+
+    /* 填写区域 */
+    var form=document.createElement('div');
+    form.style.cssText='padding:14px 16px';
+
+    function field(label,placeholder,val,key,type){
+      var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:12px';
+      var lbl=document.createElement('p');lbl.style.cssText='font-size:11px;font-weight:700;color:#7A6E6D;margin-bottom:5px';lbl.textContent=label;wrap.appendChild(lbl);
+      var inp2=document.createElement('input');inp2.type=type||'text';inp2.placeholder=placeholder;inp2.value=val||'';
+      inp2.style.cssText='width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(74,62,61,0.12);background:#fff;font-size:13px;color:#4A3E3D;box-sizing:border-box';
+      inp2.oninput=function(){plan[key]=inp2.value;};
+      wrap.appendChild(inp2);return wrap;
+    }
+
+    form.appendChild(field('月度预算（元）','例：500',plan.budget,'budget','number'));
+    form.appendChild(field('宠物体重（kg）','例：4.5',plan.weight,'weight','number'));
+    form.appendChild(field('日均喂食量（克，可选）','留空则系统自动估算',plan.daily,'daily','number'));
+
+    /* 偏好标签 */
+    var prefWrap=document.createElement('div');prefWrap.style.cssText='margin-bottom:16px';
+    var prefLbl=document.createElement('p');prefLbl.style.cssText='font-size:11px;font-weight:700;color:#7A6E6D;margin-bottom:7px';prefLbl.textContent='粮品偏好（可多选）';
+    prefWrap.appendChild(prefLbl);
+    var tagRow=document.createElement('div');tagRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
+    FOOD_PREF_TAGS.forEach(function(tag){
+      var t=document.createElement('div');
+      var isOn=plan.prefs&&plan.prefs.indexOf(tag)!==-1;
+      t.style.cssText='padding:5px 12px;border-radius:99px;border:1.5px solid '+(isOn?'#7A9E8E':'rgba(74,62,61,0.12)')+';background:'+(isOn?'rgba(122,158,142,0.1)':'#fff')+';color:'+(isOn?'#5C8070':'#A89E9D')+';font-size:11px;font-weight:600;cursor:pointer;transition:.15s';
+      t.textContent=tag;
+      t.onclick=function(){
+        plan.prefs=plan.prefs||[];
+        var idx=plan.prefs.indexOf(tag);
+        if(idx===-1)plan.prefs.push(tag);else plan.prefs.splice(idx,1);
+        renderPlanContent(pet);
+      };
+      tagRow.appendChild(t);
+    });
+    prefWrap.appendChild(tagRow);form.appendChild(prefWrap);
+
+    /* 生成方案按钮 */
+    var genBtn=document.createElement('button');
+    genBtn.style.cssText='width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF8E53,#E57539);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px';
+    genBtn.textContent='生成采购方案 →';
+    genBtn.onclick=function(){
+      saveFeedingPlan(pet.id,plan);
+      renderPlanResult(pet,plan,scroll,form,genBtn,resultArea);
+    };
+    form.appendChild(genBtn);
+
+    /* 方案结果区域 */
+    var resultArea=document.createElement('div');
+    form.appendChild(resultArea);
+
+    /* 若已有保存方案，自动展示 */
+    var savedPlan=getFeedingPlan(pet.id);
+    if(savedPlan&&(savedPlan.budget||savedPlan.weight)){
+      renderPlanResult(pet,savedPlan,scroll,form,genBtn,resultArea);
+    }
+
+    scroll.appendChild(form);
+  }
+
+  function renderPlanResult(pet,plan,scroll,form,genBtn,resultArea){
+    resultArea.innerHTML='';
+    var results=calcPurchasePlan(pet,plan);
+    var dailyG=plan.daily?parseInt(plan.daily):getDailyGrams(pet,plan);
+    var budget=parseFloat(plan.budget)||500;
+
+    var title=document.createElement('p');
+    title.style.cssText='font-size:12px;font-weight:800;color:#4A3E3D;margin-bottom:10px;padding-top:4px';
+    title.textContent='📦 '+pet.name+'的采购方案';
+    resultArea.appendChild(title);
+
+    var info=document.createElement('p');
+    info.style.cssText='font-size:10px;color:#A89E9D;margin-bottom:10px';
+    info.textContent='日均食量约 '+dailyG+'g · 月预算 ¥'+budget;
+    resultArea.appendChild(info);
+
+    var within=results.filter(function(r){return r.withinBudget;});
+    var over=results.filter(function(r){return !r.withinBudget;});
+    var showList=within.length?within:results;
+
+    showList.slice(0,4).forEach(function(r,i){
+      var card=document.createElement('div');
+      card.style.cssText='background:#fff;border-radius:14px;padding:12px;border:1.5px solid '+(i===0?'#DFA06E':'rgba(74,62,61,0.08)')+';margin-bottom:8px;cursor:pointer;transition:.15s';
+      if(i===0)card.innerHTML='<span style="font-size:9px;background:rgba(223,160,110,0.15);color:#C88A5A;padding:2px 7px;border-radius:99px;font-weight:700;display:inline-block;margin-bottom:6px">⭐ 最优推荐</span>';
+
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px';
+      var icon=document.createElement('div');icon.style.cssText='width:44px;height:44px;background:#F5F0EA;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px';
+      icon.textContent=pet.species==='cat'?'🐱':'🐶';
+      var info2=document.createElement('div');info2.style.cssText='flex:1;min-width:0';
+      info2.innerHTML='<p style="font-size:11px;font-weight:700;color:#4A3E3D;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+r.sku.name+'</p>'
+        +'<p style="font-size:9px;color:#A89E9D;margin-top:1px">'+r.sku.brand+' · '+r.sku.weight+'kg/袋 · 可吃'+r.daysPerBag+'天</p>'
+        +'<p style="font-size:10px;color:#7A9E8E;margin-top:2px">月需'+r.bagsPerMonth+'袋 · 月消费 <b style="color:'+(r.withinBudget?'#7A9E8E':'#E57539')+'">¥'+r.monthlyCost+'</b></p>';
+      var buyBtn=document.createElement('button');
+      buyBtn.style.cssText='padding:8px 12px;border-radius:10px;background:'+(i===0?'linear-gradient(135deg,#FF8E53,#E57539)':'rgba(74,62,61,0.06)')+';color:'+(i===0?'#fff':'#7A6E6D')+';font-size:11px;font-weight:700;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap';
+      buyBtn.textContent='京东购买';
+      buyBtn.onclick=function(e){
+        e.stopPropagation();
+        saveFoodPurchase(pet.id,{petId:pet.id,petName:pet.name,skuId:r.sku.id,skuName:r.sku.name,brand:r.sku.brand,weightKg:r.sku.weight,price:r.sku.price,timestamp:new Date().toISOString()});
+        saveRili({type:'accounting',petName:pet.name,petId:pet.id,amount:r.sku.price*r.bagsPerMonth,category:'food',categoryName:'饮食',categoryIcon:'🍱',desc:'购买'+r.sku.name+' ×'+r.bagsPerMonth+'袋'});
+        window.open('https://item.jd.com/'+r.sku.sku+'.html','_blank');
+      };
+      row.appendChild(icon);row.appendChild(info2);row.appendChild(buyBtn);
+      card.appendChild(row);
+      resultArea.appendChild(card);
+    });
+
+    if(over.length&&within.length){
+      var overNote=document.createElement('p');overNote.style.cssText='font-size:10px;color:#A89E9D;margin-top:4px;text-align:center';
+      overNote.textContent='另有 '+over.length+' 款超出预算（可调整预算查看）';
+      resultArea.appendChild(overNote);
+    }
+  }
+
+  panel.appendChild(scroll);
+  mask.appendChild(panel);
+  document.body.appendChild(mask);
+  mask.onclick=function(e){if(e.target===mask)mask.remove();};
+  renderPlanContent(activePet);
+}
+
 var SCENE_STICKERS={
   '洗澡':'bath','吹风':'bath','洗香香':'bath','剪毛':'scissors','美容':'scissors','剃毛':'scissors',
   '打针':'needle','体检':'medical','驱虫':'pill','疫苗':'needle','看医生':'medical','兽医':'medical','看病':'medical','吃药':'pill','绝育':'medical',
