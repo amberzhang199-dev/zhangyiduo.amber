@@ -2014,10 +2014,39 @@ var PAST_LIFE_RESULTS=[
 ];
 
 
-function showQuizRecommend(chatBody,pets,systemPrompt){
-  var petName=pets[0]?pets[0].name:'神秘毛孩子';
-  var petId=pets[0]?pets[0].id:'unknown';
-  var petSpecies=pets[0]?pets[0].species:'cat';
+function showQuizRecommend(chatBody,pets,systemPrompt,selectedPet){
+  /* 多宠模式且未指定宠物：先渲染选择卡片 */
+  if(pets.length>1&&!selectedPet){
+    var pickCard=el('div','');pickCard.style.cssText='animation:fadeUp .4s ease both;margin:10px 0';
+    pickCard.innerHTML='<div style="background:linear-gradient(135deg,#FFF9F0,#FFF0E0);border-radius:18px;padding:16px 18px;border:1px solid rgba(255,165,0,.2);box-shadow:0 4px 16px rgba(255,142,83,.1)">'
+      +'<p style="text-align:center;font-size:15px;color:#E57539;margin-bottom:4px">🔮 趣味测一测</p>'
+      +'<p style="text-align:center;font-size:11px;color:var(--if);margin-bottom:14px">选择要测试的宝贝</p>'
+      +'<div id="pet-pick-btns" style="display:flex;flex-direction:column;gap:8px"></div></div>';
+    chatBody.appendChild(pickCard);chatBody.scrollTop=chatBody.scrollHeight;
+    var pickBtns=pickCard.querySelector('#pet-pick-btns');
+    pets.forEach(function(p){
+      var btn=el('button','');
+      btn.style.cssText='width:100%;padding:11px 14px;border-radius:14px;border:1px solid rgba(255,200,180,.25);background:rgba(255,255,255,.7);text-align:left;cursor:pointer;transition:.2s;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:10px';
+      btn.innerHTML='<span style="font-size:22px">'+(p.species==='cat'?'🐱':'🐶')+'</span>'
+        +'<div><p style="font-weight:700;font-size:13px;color:#4A3E3D">'+p.name+'</p>'
+        +(p.has_mbti?'<p style="font-size:10px;color:var(--if)">'+p.mbti_profile.final_type+'</p>':'')
+        +'</div>';
+      btn.onmouseenter=function(){btn.style.borderColor='rgba(255,142,83,.4)';btn.style.background='rgba(255,142,83,.06)';};
+      btn.onmouseleave=function(){btn.style.borderColor='rgba(255,200,180,.25)';btn.style.background='rgba(255,255,255,.7)';};
+      btn.onclick=function(){
+        pickBtns.querySelectorAll('button').forEach(function(b){b.disabled=true;b.style.opacity='.5';});
+        btn.style.opacity='1';btn.style.borderColor='var(--or)';btn.style.background='rgba(255,142,83,.1)';
+        showQuizRecommend(chatBody,pets,systemPrompt,p);
+      };
+      pickBtns.appendChild(btn);
+    });
+    return;
+  }
+
+  var activePet=selectedPet||pets[0];
+  var petName=activePet?activePet.name:'神秘毛孩子';
+  var petId=activePet?activePet.id:'unknown';
+  var petSpecies=activePet?activePet.species:'cat';
   var doneModel=_quizDone[petId+'_model'];
   var donePast=_quizDone[petId+'_pastlife'];
 
@@ -2061,15 +2090,16 @@ function showQuizRecommend(chatBody,pets,systemPrompt){
       var quizType=btn.getAttribute('data-quiz');
       optBtns.forEach(function(b){b.disabled=true;b.style.opacity='.5';b.style.cursor='default';});
       btn.style.borderColor='var(--or)';btn.style.background='rgba(255,142,83,.1)';btn.style.opacity='1';
-      showQuizUpload(chatBody,pets,systemPrompt,quizType);
+      showQuizUpload(chatBody,pets,systemPrompt,quizType,activePet);
     };
   });
 }
 
-function showQuizUpload(chatBody,pets,systemPrompt,quizType){
-  var petName=pets[0]?pets[0].name:'宝贝';
-  var petId=pets[0]?pets[0].id:'unknown';
-  var petSpecies=pets[0]?pets[0].species:'cat';
+function showQuizUpload(chatBody,pets,systemPrompt,quizType,activePet){
+  var pet=activePet||pets[0];
+  var petName=pet?pet.name:'宝贝';
+  var petId=pet?pet.id:'unknown';
+  var petSpecies=pet?pet.species:'cat';
 
   var uploadCard=el('div','');
   uploadCard.style.cssText='animation:fadeUp .3s ease both;margin:8px 0;text-align:center';
