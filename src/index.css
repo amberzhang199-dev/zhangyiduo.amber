@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FAF6F0;
+  --color-cream-dark: #F3EDE4;
+  --color-paper: #FDF9F3;
+  --color-ink: #4A3E3D;
+  --color-ink-light: #7A6E6D;
+  --color-ink-faint: #A89E9D;
+  --color-orange: #FF8E53;
+  --color-orange-light: #FFB088;
+  --color-orange-dark: #E57539;
+  --color-border: rgba(74, 62, 61, 0.12);
+  --color-border-strong: rgba(74, 62, 61, 0.25);
+  --color-shadow: rgba(74, 62, 61, 0.08);
+
+  --font-body: "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+
+  --radius-card: 1.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--color-cream);
+  background-image:
+    radial-gradient(circle, rgba(74,62,61,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: var(--color-ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+input, button, textarea {
+  font-family: inherit;
+}
