@@ -221,13 +221,14 @@ select.inp{-webkit-appearance:none;-moz-appearance:none;appearance:none;backgrou
 .rili-detail{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;background:#FFFBF6;border-radius:18px;border:1px solid #E8DFD5;box-shadow:0 8px 32px rgba(78,62,50,.1);padding:14px;min-width:220px;max-width:280px;animation:popIn .3s cubic-bezier(.34,1.56,.64,1) both;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23f)' opacity='.02'/%3E%3C/svg%3E")}
 .rili-detail-item{font-size:11px;color:#4E3E32;padding:6px 0;border-bottom:1px solid #E8DFD5;display:flex;align-items:center;gap:8px}
 .rili-detail-item:last-child{border-bottom:none}
-.rili-sts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:10px 12px;flex-shrink:0}
-.rili-st{background:#FFFDF9;border-radius:14px;padding:10px 6px;text-align:center;box-shadow:0 1px 4px rgba(78,62,50,.03)}
-.rili-st .sn{font-size:18px;font-weight:800;color:#DFA06E}.rili-st .sl{font-size:8px;color:#AEA093;font-weight:600;margin-top:1px}
+.rili-sts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 12px;flex-shrink:0}
+.rili-st{background:linear-gradient(135deg,#FFFDF8,#FFF9F2);border-radius:18px;padding:12px 6px;text-align:center;box-shadow:0 6px 18px rgba(74,62,61,0.08),0 1px 4px rgba(74,62,61,0.04);transition:.15s;cursor:pointer}
+.rili-st:active{transform:scale(.96)}
+.rili-st .sn{font-size:19px;font-weight:800;color:#FF8E53}.rili-st .sl{font-size:8px;color:#B8AFA6;font-weight:600;margin-top:2px}
 .rili-acct{padding:8px 12px;flex-shrink:0}
-.rili-acct-t{font-size:11px;font-weight:700;color:#7A6B5E;margin-bottom:8px}
-.rili-acct-row{background:#FFFDF9;border-radius:12px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 4px rgba(78,62,50,.03)}
-.rili-acct-total{background:linear-gradient(135deg,#FFF5E8,#FFF0DC);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin:8px 12px;border:1px solid rgba(223,160,110,.15);flex-shrink:0}
+.rili-acct-t{font-size:11px;font-weight:700;color:#4A3E3D;margin-bottom:8px}
+.rili-acct-row{background:linear-gradient(135deg,#FFFDF8,#FFF9F2);border-radius:16px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(74,62,61,0.07),0 1px 3px rgba(74,62,61,0.03)}
+.rili-acct-total{background:linear-gradient(135deg,#FFF5E8,#FFEFE0);border-radius:18px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:8px 12px;box-shadow:0 6px 18px rgba(223,160,110,0.1),0 1px 4px rgba(223,160,110,0.06);flex-shrink:0}
 
 .dbg-t{position:fixed;bottom:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(74,62,61,.08);font-size:9px;display:flex;align-items:center;justify-content:center;z-index:999;color:var(--if)}
 .dbg-t:hover{background:rgba(74,62,61,.18)}
@@ -2379,15 +2380,14 @@ function showBudgetPanel(pets,defaultPet){
   var panel=document.createElement('div');
   panel.style.cssText=[
     'background:#FAF6F0',
-    'border-radius:24px',
+    'border-radius:28px',
     'width:100%',
     'max-width:340px',
     'max-height:82vh',
     'display:flex',
     'flex-direction:column',
     'overflow:hidden',
-    'border:1.5px solid #EDE5DA',
-    'box-shadow:0 10px 36px rgba(74,62,61,0.13)',
+    'box-shadow:0 16px 48px rgba(74,62,61,0.14),0 3px 10px rgba(74,62,61,0.06)',
     'animation:popIn .26s cubic-bezier(.34,1.4,.64,1) both'
   ].join(';');
 
@@ -2487,7 +2487,7 @@ function showBudgetPanel(pets,defaultPet){
 
     skus.forEach(function(sku){
       var card=document.createElement('div');
-      card.style.cssText='background:#fff;border-radius:16px;padding:10px 12px;border:1.5px solid #EDE5DA;margin-bottom:8px;box-shadow:0 1px 4px rgba(74,62,61,0.04);transition:.18s;overflow:hidden';
+      card.style.cssText='background:linear-gradient(135deg,#FFFDF8,#FFF9F2);border-radius:20px;padding:11px 13px;margin-bottom:10px;box-shadow:0 6px 18px rgba(74,62,61,0.08),0 1px 4px rgba(74,62,61,0.04);transition:.18s;overflow:hidden';
       /* 标签 */
       var tagSpan='<span style="display:inline-block;font-size:8.5px;background:rgba('+(sku.cat==='food'?'223,160,110':sku.cat==='toy'?'122,158,142':'180,160,140')+',0.14);color:'+(sku.cat==='food'?'#C88A5A':sku.cat==='toy'?'#5C8070':'#8A7A6A')+';padding:2px 7px;border-radius:99px;font-weight:700;margin-bottom:6px">'+sku.emoji+' '+(sku.cat==='food'?'饮食':sku.cat==='toy'?'玩乐':'用品')+'</span>';
       var topRow='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'
@@ -3132,14 +3132,14 @@ function renderRiliPage(container,pets){
 
   /* 月度预算设置按钮 */
   var budgetBtn=el('div','');
-  budgetBtn.style.cssText='margin:8px 12px 0;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#FFFBF4,#FFF6EB);border:1.5px solid rgba(223,160,110,0.25);border-radius:14px;padding:10px 14px;cursor:pointer;transition:.15s';
+  budgetBtn.style.cssText='margin:8px 12px 0;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#FFFBF4,#FFF6EB);border-radius:18px;padding:11px 15px;cursor:pointer;transition:.15s;box-shadow:0 6px 18px rgba(223,160,110,0.1),0 1px 4px rgba(223,160,110,0.06)';
   budgetBtn.innerHTML='<div style="display:flex;align-items:center;gap:8px">'
     +'<span style="font-size:18px">💰</span>'
     +'<div><p style="font-size:12px;font-weight:700;color:#4A3E3D">月度预算设置</p>'
     +'<p style="font-size:10px;color:#B8AFA6;margin-top:1px">智能匹配适配商品</p></div></div>'
     +'<span style="font-size:18px;color:#DFA06E;font-weight:700">›</span>';
-  budgetBtn.onmouseenter=function(){budgetBtn.style.background='linear-gradient(135deg,#FFF7EC,#FFF1DE)';budgetBtn.style.borderColor='rgba(223,160,110,0.4)';};
-  budgetBtn.onmouseleave=function(){budgetBtn.style.background='linear-gradient(135deg,#FFFBF4,#FFF6EB)';budgetBtn.style.borderColor='rgba(223,160,110,0.25)';};
+  budgetBtn.onmouseenter=function(){budgetBtn.style.background='linear-gradient(135deg,#FFF7EC,#FFF1DE)';budgetBtn.style.boxShadow='0 8px 22px rgba(223,160,110,0.16),0 2px 6px rgba(223,160,110,0.08)';};
+  budgetBtn.onmouseleave=function(){budgetBtn.style.background='linear-gradient(135deg,#FFFBF4,#FFF6EB)';budgetBtn.style.boxShadow='0 6px 18px rgba(223,160,110,0.1),0 1px 4px rgba(223,160,110,0.06)';};
   budgetBtn.onclick=function(){showBudgetPanel(pets,pets[0]);};
   rili.appendChild(budgetBtn);
 
@@ -3155,7 +3155,7 @@ function renderRiliPage(container,pets){
   monthAccts.forEach(function(a){totalAmt+=a.amount;catTotals[a.category]=(catTotals[a.category]||0)+a.amount;});
 
   var acctCard=el('div','');
-  acctCard.style.cssText='margin:10px 12px;background:#FFFDF9;border-radius:16px;padding:16px;border:1px solid #E8DFD5;box-shadow:0 2px 8px rgba(78,62,50,.03);flex-shrink:0';
+  acctCard.style.cssText='margin:10px 12px;background:linear-gradient(135deg,#FFFDF8,#FFF9F2);border-radius:20px;padding:16px;box-shadow:0 6px 20px rgba(74,62,61,0.08),0 1px 4px rgba(74,62,61,0.04);flex-shrink:0';
   acctCard.innerHTML='<div style="text-align:center;margin-bottom:4px"><div style="font-size:10px;color:#AEA093;font-weight:600">💰 本月消费总额</div><div style="font-size:28px;font-weight:800;color:#DFA06E;margin-top:4px">¥'+totalAmt.toFixed(1)+'</div></div>'
     +'<div style="border-top:1px solid #E8DFD5;margin-top:10px;padding-top:8px">'
     +'<div id="acct-toggle" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0">'
