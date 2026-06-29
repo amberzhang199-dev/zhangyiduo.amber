@@ -401,9 +401,9 @@ function logoutUser(){
   persistUserData();
   _currentUID='';
   localStorage.removeItem('joypet_current_uid');
-  _rili=[];_chatHistory=[];_quizDone={};
-  globalAgentState={mode:null,petCount:0,currentStep:'login',pets:[]};
+  _rili=[];_chatHistory=[];_quizDone=[];
   _regDrafts=[];
+  setState({mode:null,petCount:0,currentStep:'login',pets:[]});
 }
 
 function persistUserData(){
@@ -1376,7 +1376,7 @@ function renderChat(){
   var logBtn=el('button','ib gh');logBtn.title='退出登录';
   logBtn.innerHTML='<span style="font-size:13px">👤</span>';
   logBtn.onclick=function(){
-    if(confirm('确定退出当前账号？')){logoutUser();_ls.forEach(function(f){f();});}
+    if(confirm('确定退出当前账号？')){logoutUser();}
   };
   hdr.appendChild(logBtn);
 
