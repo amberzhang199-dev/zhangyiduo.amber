@@ -2526,7 +2526,7 @@ function showBudgetPanel(pets,defaultPet){
     scroll.appendChild(inputSection);
     scroll.appendChild(recArea);
 
-    if(saved>0)renderRec(saved,recArea);
+    /* 始终先只展示输入框，点确认后才渲染 SKU */
   }
 
   function renderRec(budget,area){
