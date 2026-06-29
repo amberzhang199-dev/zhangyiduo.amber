@@ -1376,7 +1376,22 @@ function renderChat(){
   var logBtn=el('button','ib gh');logBtn.title='退出登录';
   logBtn.innerHTML='<span style="font-size:13px">👤</span>';
   logBtn.onclick=function(){
-    if(confirm('确定退出当前账号？')){logoutUser();}
+    /* 自定义确认弹窗，避免 iOS Safari 拦截 confirm() */
+    var mask=document.createElement('div');
+    mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+    var box=document.createElement('div');
+    box.style.cssText='background:#FDF9F3;border-radius:20px;padding:24px 20px;width:260px;text-align:center;box-shadow:0 8px 32px rgba(74,62,61,0.15)';
+    box.innerHTML='<p style="font-size:15px;font-weight:700;color:#4A3E3D;margin-bottom:6px">退出登录</p>'
+      +'<p style="font-size:13px;color:#A89E9D;margin-bottom:20px">确定退出当前账号？</p>'
+      +'<div style="display:flex;gap:10px">'
+      +'<button id="logout-cancel" style="flex:1;padding:10px;border-radius:12px;border:1.5px solid rgba(74,62,61,0.15);background:#F3EDE4;color:#7A6E6D;font-size:13px;font-weight:600;cursor:pointer">取消</button>'
+      +'<button id="logout-confirm" style="flex:1;padding:10px;border-radius:12px;border:none;background:#FF8E53;color:#fff;font-size:13px;font-weight:600;cursor:pointer">退出</button>'
+      +'</div>';
+    mask.appendChild(box);
+    document.body.appendChild(mask);
+    box.querySelector('#logout-cancel').onclick=function(){mask.remove();};
+    box.querySelector('#logout-confirm').onclick=function(){mask.remove();logoutUser();};
+    mask.onclick=function(e){if(e.target===mask)mask.remove();};
   };
   hdr.appendChild(logBtn);
 
