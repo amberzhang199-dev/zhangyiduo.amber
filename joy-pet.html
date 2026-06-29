@@ -3154,26 +3154,18 @@ function renderRiliPage(container,pets){
   var totalRecords=_rili.length;
   var badgeCount=_rili.filter(function(r){return r.type==='badge';}).length;
   var quizCount=_rili.filter(function(r){return r.type&&r.type.startsWith('quiz');}).length;
-  sts.innerHTML='<div class="rili-st"><div class="sn">'+totalRecords+'</div><div class="sl">总记录</div></div>'
+  sts.innerHTML='<div class="rili-st" id="budget-stat" style="cursor:pointer;transition:.15s" onmouseenter="this.style.transform=\'scale(1.04)\'" onmouseleave="this.style.transform=\'\'"><div class="sn">💰</div><div class="sl" style="color:#FF8E53">预算设置</div></div>'
     +'<div class="rili-st" id="badge-entry" style="cursor:pointer;transition:.15s" onmouseenter="this.style.transform=\'scale(1.04)\'" onmouseleave="this.style.transform=\'\'"><div class="sn">'+badgeCount+'</div><div class="sl">🏅 徽章</div></div>'
     +'<div class="rili-st"><div class="sn">'+quizCount+'</div><div class="sl">🔮 测试</div></div>';
   rili.appendChild(sts);
   /* 徽章入口点击 */
   var badgeEntry=rili.querySelector('#badge-entry');
   if(badgeEntry)badgeEntry.onclick=function(){showBadgeWall(pets);};
+  /* 预算入口点击 */
+  var budgetStat=rili.querySelector('#budget-stat');
+  if(budgetStat)budgetStat.onclick=function(){showBudgetPanel(pets,pets[0]);}; 
 
-  /* 月度预算设置按钮 */
-  var budgetBtn=el('div','');
-  budgetBtn.style.cssText='margin:8px 12px 0;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#FFFBF4,#FFF6EB);border-radius:18px;padding:11px 15px;cursor:pointer;transition:.15s;box-shadow:0 6px 18px rgba(223,160,110,0.1),0 1px 4px rgba(223,160,110,0.06)';
-  budgetBtn.innerHTML='<div style="display:flex;align-items:center;gap:8px">'
-    +'<span style="font-size:18px">💰</span>'
-    +'<div><p style="font-size:12px;font-weight:700;color:#4A3E3D">月度预算设置</p>'
-    +'<p style="font-size:10px;color:#B8AFA6;margin-top:1px">智能匹配适配商品</p></div></div>'
-    +'<span style="font-size:18px;color:#DFA06E;font-weight:700">›</span>';
-  budgetBtn.onmouseenter=function(){budgetBtn.style.background='linear-gradient(135deg,#FFF7EC,#FFF1DE)';budgetBtn.style.boxShadow='0 8px 22px rgba(223,160,110,0.16),0 2px 6px rgba(223,160,110,0.08)';};
-  budgetBtn.onmouseleave=function(){budgetBtn.style.background='linear-gradient(135deg,#FFFBF4,#FFF6EB)';budgetBtn.style.boxShadow='0 6px 18px rgba(223,160,110,0.1),0 1px 4px rgba(223,160,110,0.06)';};
-  budgetBtn.onclick=function(){showBudgetPanel(pets,pets[0]);};
-  rili.appendChild(budgetBtn);
+
 
   /* Accounting section — 月度账单卡片 */
   var acctRecords=_rili.filter(function(r){return r.type==='accounting';});
