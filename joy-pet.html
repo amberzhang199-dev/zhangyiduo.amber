@@ -3207,14 +3207,28 @@ function renderRiliPage(container,pets){
   var quizCount=_rili.filter(function(r){return r.type&&r.type.startsWith('quiz');}).length;
   sts.innerHTML='<div class="rili-st" id="budget-stat" style="cursor:pointer;transition:.15s" onmouseenter="this.style.transform=\'scale(1.04)\'" onmouseleave="this.style.transform=\'\'"><div class="sn">💰</div><div class="sl" style="color:#FF8E53">预算设置</div></div>'
     +'<div class="rili-st" id="badge-entry" style="cursor:pointer;transition:.15s" onmouseenter="this.style.transform=\'scale(1.04)\'" onmouseleave="this.style.transform=\'\'"><div class="sn">'+badgeCount+'</div><div class="sl">🏅 徽章</div></div>'
-    +'<div class="rili-st"><div class="sn">'+quizCount+'</div><div class="sl">🔮 测试</div></div>';
+    +'<div class="rili-st" id="quiz-entry" style="cursor:pointer;transition:.15s" onmouseenter="this.style.transform=\'scale(1.04)\'" onmouseleave="this.style.transform=\'\'" ><div class="sn">'+quizCount+'</div><div class="sl">🔮 测试</div></div>';
   rili.appendChild(sts);
   /* 徽章入口点击 */
   var badgeEntry=rili.querySelector('#badge-entry');
   if(badgeEntry)badgeEntry.onclick=function(){showBadgeWall(pets);};
   /* 预算入口点击 */
   var budgetStat=rili.querySelector('#budget-stat');
-  if(budgetStat)budgetStat.onclick=function(){showBudgetPanel(pets,pets[0]);}; 
+  if(budgetStat)budgetStat.onclick=function(){showBudgetPanel(pets,pets[0]);};
+  /* 测一测入口：滑回聊天页并触发测一测卡片 */
+  var quizEntry=rili.querySelector('#quiz-entry');
+  if(quizEntry)quizEntry.onclick=function(){
+    var sl=riliPage.closest('.cht-slider');
+    var chatBodyEl=document.getElementById('chat-body');
+    if(sl)sl.classList.remove('show-rili');
+    if(chatBodyEl){
+      var sysEl=el('div','sys');sysEl.style.textAlign='center';
+      sysEl.innerHTML='<span>点击下方按钮开始测一测 🔮</span>';
+      chatBodyEl.appendChild(sysEl);
+      chatBodyEl.scrollTop=chatBodyEl.scrollHeight;
+      setTimeout(function(){showQuizRecommend(chatBodyEl,pets,buildSystemPrompt(pets));},300);
+    }
+  }; 
 
 
 
