@@ -2313,111 +2313,90 @@ function calcPurchasePlan(pet,plan){
 /* 显示喂养 Plan 入口面板 */
 function showFeedingPlanPanel(pets){
   var mask=document.createElement('div');
-  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px';
-
+  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px';
   var panel=document.createElement('div');
-  var panelH=Math.min(window.innerHeight*0.82,580);
-  /* 日系奶fufu手账风格：淡奶杏底色 + 大圆角 + 浅棕描边 */
-  panel.style.cssText='background:#FFFCF7;border-radius:24px;width:100%;max-width:360px;height:'+panelH+'px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(74,62,61,0.14),0 2px 8px rgba(74,62,61,0.06);border:1.5px solid #E8DDD0;animation:popIn .28s cubic-bezier(.34,1.4,.64,1) both';
-
-  /* 标题栏 */
+  var panelH=Math.min(window.innerHeight*0.84,600);
+  panel.style.cssText='background:#FFFCF7;border-radius:28px;width:100%;max-width:360px;height:'+panelH+'px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(74,62,61,0.16);border:1.5px solid #EDE5DA;animation:popIn .28s cubic-bezier(.34,1.4,.64,1) both';
   var hdr=document.createElement('div');
-  hdr.style.cssText='flex-shrink:0;padding:16px 16px 10px;border-bottom:1px solid #EEE6DC;position:relative';
-  hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px">'
-    +'<span style="font-size:22px">🍽</span>'
-    +'<div>'
-    +'<p style="font-size:14px;font-weight:800;color:#4A3E3D;letter-spacing:.3px">喂养规划</p>'
-    +'<p style="font-size:10px;color:#B0A89E;margin-top:1px">制定专属采购方案 · 一键京东下单</p>'
-    +'</div>'
-    +'</div>'
-    /* 爪印装饰 */
-    +'<span style="position:absolute;right:42px;top:14px;font-size:16px;opacity:.18;transform:rotate(12deg)">🐾</span>'
-    +'<span style="position:absolute;right:24px;top:28px;font-size:10px;opacity:.15;transform:rotate(-8deg)">🐾</span>';
+  hdr.style.cssText='flex-shrink:0;padding:18px 18px 14px;border-bottom:1.5px solid #F0E8DF;background:linear-gradient(135deg,#FFFCF7,#FFF8F0);position:relative;overflow:hidden';
+  hdr.innerHTML='<div style="position:absolute;right:14px;top:8px;font-size:30px;opacity:.07;transform:rotate(15deg)">\uD83D\uDC3E</div>'
+    +'<div style="position:absolute;right:36px;top:26px;font-size:16px;opacity:.06;transform:rotate(-10deg)">\uD83D\uDC3E</div>'
+    +'<div style="display:flex;align-items:center;gap:10px">'
+    +'<div style="width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#FFD4A8,#FFBF8A);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 8px rgba(255,142,83,0.2)">\uD83C\uDF7D</div>'
+    +'<div><p style="font-size:15px;font-weight:800;color:#4A3E3D">\u559F\u517B\u89C4\u5212</p>'
+    +'<p style="font-size:10px;color:#B8AFA6;margin-top:1px">\u5236\u5B9A\u4E13\u5C5E\u65B9\u6848 \u00B7 \u4E00\u952E\u4EAC\u4E1C\u8D2D\u7C2E</p></div></div>';
   var closeBtn=document.createElement('button');
-  closeBtn.style.cssText='position:absolute;right:14px;top:14px;width:26px;height:26px;border-radius:50%;border:1.5px solid #E0D8D0;background:#F5F0EA;color:#9A918A;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700';
-  closeBtn.textContent='×';closeBtn.onclick=function(){mask.remove();};
+  closeBtn.style.cssText='position:absolute;right:14px;top:14px;width:28px;height:28px;border-radius:50%;border:1.5px solid #E8DDD0;background:#FDF8F3;color:#A09890;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:600';
+  closeBtn.textContent='\xd7';closeBtn.onclick=function(){mask.remove();};
   hdr.appendChild(closeBtn);panel.appendChild(hdr);
-
   var scroll=document.createElement('div');
   scroll.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch';
-
-  /* 各宠物维护独立 plan 对象，勾选偏好时直接修改不重建 */
   var planMap={};
   pets.forEach(function(p){planMap[p.id]=Object.assign({budget:'',weight:'',daily:'',prefs:[]},getFeedingPlan(p.id)||{});});
-
   var activePet=pets[0];
 
   function renderPlanContent(pet){
     scroll.innerHTML='';
     var plan=planMap[pet.id];
-
-    /* 宠物切换标签 */
     if(pets.length>1){
       var tabs=document.createElement('div');
-      tabs.style.cssText='display:flex;gap:6px;padding:10px 14px 0;overflow-x:auto';
+      tabs.style.cssText='display:flex;gap:6px;padding:12px 14px 0;justify-content:center';
       pets.forEach(function(p){
         var isA=(p.id===pet.id);
         var tab=document.createElement('div');
-        tab.style.cssText='flex-shrink:0;padding:5px 12px;border-radius:99px;border:1.5px solid '+(isA?'#DFA06E':'#E0D8D0')+';background:'+(isA?'rgba(223,160,110,0.1)':'#FAF6F0')+';color:'+(isA?'#C88A5A':'#B0A89E')+';font-size:11px;font-weight:700;cursor:pointer';
-        tab.textContent=(p.species==='cat'?'🐱':'🐶')+' '+p.name;
+        tab.style.cssText='flex:1;max-width:120px;text-align:center;padding:7px 0;border-radius:12px;border:1.5px solid '+(isA?'#DFA06E':'#E8DDD0')+';background:'+(isA?'linear-gradient(135deg,rgba(223,160,110,0.15),rgba(223,160,110,0.08))':'#FAF6F0')+';color:'+(isA?'#C88A5A':'#B8AFA6')+';font-size:12px;font-weight:700;cursor:pointer;transition:.15s';
+        tab.textContent=(p.species==='cat'?'\uD83D\uDC31':'\uD83D\uDC36')+'\u00A0'+p.name;
         tab.onclick=function(){activePet=p;renderPlanContent(p);};
         tabs.appendChild(tab);
       });
       scroll.appendChild(tabs);
     }
-
-    var form=document.createElement('div');
-    form.style.cssText='padding:12px 14px';
-
-    /* 输入字段 */
-    function mkField(label,ph,val,key,type){
-      var w=document.createElement('div');w.style.cssText='margin-bottom:10px';
-      var l=document.createElement('p');l.style.cssText='font-size:10.5px;font-weight:700;color:#8A8078;margin-bottom:4px';l.textContent=label;w.appendChild(l);
+    var form=document.createElement('div');form.style.cssText='padding:14px 16px 0';
+    function mkField(emoji,label,ph,val,key,type){
+      var w=document.createElement('div');w.style.cssText='margin-bottom:11px';
+      var l=document.createElement('div');l.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:5px';
+      l.innerHTML='<span style="font-size:14px">'+emoji+'</span><p style="font-size:11px;font-weight:700;color:#8A8078">'+label+'</p>';
+      w.appendChild(l);
       var i=document.createElement('input');i.type=type||'text';i.placeholder=ph;i.value=val||'';
-      i.style.cssText='width:100%;padding:9px 12px;border-radius:12px;border:1.5px solid #E0D8D0;background:#FAF6F0;font-size:13px;color:#4A3E3D;box-sizing:border-box;transition:.15s';
-      i.onfocus=function(){i.style.borderColor='#DFA06E';i.style.boxShadow='0 0 0 3px rgba(223,160,110,0.1)';};
-      i.onblur=function(){i.style.borderColor='#E0D8D0';i.style.boxShadow='none';};
+      i.style.cssText='width:100%;padding:10px 13px;border-radius:12px;border:1.5px solid #EDE5DA;background:#FAF6F0;font-size:13px;color:#4A3E3D;box-sizing:border-box;transition:.2s;outline:none';
+      i.onfocus=function(){i.style.borderColor='rgba(223,160,110,0.6)';i.style.boxShadow='0 0 0 3px rgba(223,160,110,0.1)';i.style.background='#fff';};
+      i.onblur=function(){i.style.borderColor='#EDE5DA';i.style.boxShadow='none';i.style.background='#FAF6F0';};
       i.oninput=function(){plan[key]=i.value;};
       w.appendChild(i);return w;
     }
-    form.appendChild(mkField('月度预算 💰','例：500',plan.budget,'budget','number'));
-    form.appendChild(mkField('宠物体重（kg）🐾','例：4.5',plan.weight,'weight','number'));
-    form.appendChild(mkField('日均喂食量（g，可选留空）🍱','留空自动估算',plan.daily,'daily','number'));
-
-    /* 偏好标签 — 直接改 plan.prefs，不重建 DOM */
-    var prefWrap=document.createElement('div');prefWrap.style.cssText='margin-bottom:12px';
-    var pl=document.createElement('p');pl.style.cssText='font-size:10.5px;font-weight:700;color:#8A8078;margin-bottom:6px';pl.textContent='粮品偏好 ✨（可多选）';prefWrap.appendChild(pl);
-    var tagRow=document.createElement('div');tagRow.style.cssText='display:flex;flex-wrap:wrap;gap:5px';
+    form.appendChild(mkField('\uD83D\uDCB0','\u6708\u5EA6\u9884\u7B97\uff08\u5143\uff09','\u4F8B\uff1a500',plan.budget,'budget','number'));
+    form.appendChild(mkField('\u2696\uFE0F','\u5BA0\u7269\u4F53\u91CD\uff08kg\uff09','\u4F8B\uff1a4.5',plan.weight,'weight','number'));
+    form.appendChild(mkField('\uD83C\uDF71','\u65E5\u5747\u5582\u98DF\u91CF\uff08g\uff09','\u7559\u7A7A\u81EA\u52A8\u4F30\u7B97',plan.daily,'daily','number'));
+    var prefWrap=document.createElement('div');prefWrap.style.cssText='margin-bottom:14px';
+    var pl=document.createElement('div');pl.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:8px';
+    pl.innerHTML='<span style="font-size:14px">\u2728</span><p style="font-size:11px;font-weight:700;color:#8A8078">\u7C2E\u54C1\u504F\u597D\uff08\u53EF\u591A\u9009\uff09</p>';
+    prefWrap.appendChild(pl);
+    var tagGrid=document.createElement('div');
+    tagGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:6px';
     FOOD_PREF_TAGS.forEach(function(tag){
       var isOn=plan.prefs&&plan.prefs.indexOf(tag)!==-1;
       var t=document.createElement('div');
-      t.style.cssText='padding:5px 11px;border-radius:99px;border:1.5px solid '+(isOn?'#7A9E8E':'#E0D8D0')+';background:'+(isOn?'rgba(122,158,142,0.12)':'#FAF6F0')+';color:'+(isOn?'#5C8070':'#B0A89E')+';font-size:11px;font-weight:600;cursor:pointer;transition:.15s;user-select:none';
+      t.style.cssText='text-align:center;padding:7px 4px;border-radius:10px;border:1.5px solid '+(isOn?'#7A9E8E':'#EDE5DA')+';background:'+(isOn?'rgba(122,158,142,0.12)':'#FAF6F0')+';color:'+(isOn?'#4A7A6A':'#B8AFA6')+';font-size:10px;font-weight:700;cursor:pointer;transition:.15s;user-select:none;line-height:1.2';
       t.textContent=tag;
       t.addEventListener('click',function(){
         plan.prefs=plan.prefs||[];
         var idx=plan.prefs.indexOf(tag);
-        if(idx===-1){plan.prefs.push(tag);t.style.borderColor='#7A9E8E';t.style.background='rgba(122,158,142,0.12)';t.style.color='#5C8070';}
-        else{plan.prefs.splice(idx,1);t.style.borderColor='#E0D8D0';t.style.background='#FAF6F0';t.style.color='#B0A89E';}
+        if(idx===-1){plan.prefs.push(tag);t.style.borderColor='#7A9E8E';t.style.background='rgba(122,158,142,0.12)';t.style.color='#4A7A6A';}
+        else{plan.prefs.splice(idx,1);t.style.borderColor='#EDE5DA';t.style.background='#FAF6F0';t.style.color='#B8AFA6';}
       });
-      tagRow.appendChild(t);
+      tagGrid.appendChild(t);
     });
-    prefWrap.appendChild(tagRow);form.appendChild(prefWrap);
-
-    /* 生成按钮 */
+    prefWrap.appendChild(tagGrid);form.appendChild(prefWrap);
     var genBtn=document.createElement('button');
-    genBtn.style.cssText='width:100%;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF8E53,#E57539);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:12px;box-shadow:0 3px 12px rgba(255,142,83,0.25)';
-    genBtn.innerHTML='生成采购方案 <span style="font-size:11px">🐾→</span>';
+    genBtn.style.cssText='width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF8E53,#E57539);color:#fff;font-size:13.5px;font-weight:800;cursor:pointer;margin-bottom:14px;box-shadow:0 4px 14px rgba(255,142,83,0.28);letter-spacing:.3px;transition:.15s';
+    genBtn.textContent='\u751F\u6210\u6211\u7684\u91C7\u8D2D\u65B9\u6848';
+    genBtn.onmouseenter=function(){genBtn.style.filter='brightness(1.05)';genBtn.style.transform='translateY(-1px)';};
+    genBtn.onmouseleave=function(){genBtn.style.filter='';genBtn.style.transform='';};
     var resultArea=document.createElement('div');
-    genBtn.onclick=function(){
-      saveFeedingPlan(pet.id,plan);
-      renderPlanResult(pet,plan,resultArea);
-    };
-    form.appendChild(genBtn);
-    form.appendChild(resultArea);
-
+    genBtn.onclick=function(){saveFeedingPlan(pet.id,plan);renderPlanResult(pet,plan,resultArea);};
+    form.appendChild(genBtn);form.appendChild(resultArea);
     var saved=getFeedingPlan(pet.id);
     if(saved&&(saved.budget||saved.weight)){renderPlanResult(pet,plan,resultArea);}
-
     scroll.appendChild(form);
   }
 
@@ -2428,35 +2407,37 @@ function showFeedingPlanPanel(pets){
     var budget=parseFloat(plan.budget)||500;
     var within=results.filter(function(r){return r.withinBudget;});
     var showList=within.length?within:results.slice(0,3);
-
+    var div=document.createElement('div');
+    div.style.cssText='border-top:1.5px dashed #EDE5DA;margin:0 0 12px;position:relative;text-align:center';
+    div.innerHTML='<span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#FFFCF7;padding:0 10px;font-size:10px;color:#C0B8B0;font-weight:600">\uD83D\uDCE6 '+pet.name+'\u7684\u91C7\u8D2D\u65B9\u6848</span>';
+    resultArea.appendChild(div);
     var infoEl=document.createElement('p');
-    infoEl.style.cssText='font-size:10px;color:#B0A89E;margin-bottom:8px;text-align:center';
-    infoEl.innerHTML='🐾 '+pet.name+' 日均约 <b style="color:#C88A5A">'+dailyG+'g</b> · 月预算 <b style="color:#C88A5A">¥'+budget+'</b>';
+    infoEl.style.cssText='font-size:10px;color:#B8AFA6;margin-bottom:10px;text-align:center';
+    infoEl.innerHTML='\u65E5\u5747\u7EA6 <b style="color:#C88A5A">'+dailyG+'g</b> \u00B7 \u6708\u9884\u7B97 <b style="color:#C88A5A">\xA5'+budget+'</b>';
     resultArea.appendChild(infoEl);
-
     showList.slice(0,3).forEach(function(r,i){
       var card=document.createElement('div');
-      card.style.cssText='background:'+(i===0?'linear-gradient(135deg,#FFFAF4,#FFF5EC)':'#fff')+';border-radius:14px;padding:10px 12px;border:1.5px solid '+(i===0?'rgba(223,160,110,0.35)':'#EEE6DC')+';margin-bottom:7px;transition:.15s';
-      var top=document.createElement('div');top.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:'+(i===0?'6':'0')+'px';
-      var ico=document.createElement('div');ico.style.cssText='width:38px;height:38px;background:#F5EFE7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px';ico.textContent=pet.species==='cat'?'🐱':'🐶';
+      card.style.cssText='background:'+(i===0?'linear-gradient(135deg,#FFFAF3,#FFF5E8)':'#fff')+';border-radius:16px;padding:11px 12px;border:1.5px solid '+(i===0?'rgba(223,160,110,0.4)':'#EDE5DA')+';margin-bottom:8px;box-shadow:'+(i===0?'0 3px 10px rgba(223,160,110,0.1)':'none');
+      if(i===0){var badge=document.createElement('div');badge.style.cssText='display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#FFD4A8,#FFBF8A);color:#8A4A1A;font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px;margin-bottom:7px';badge.textContent='\u2B50 \u6700\u4F18\u63A8\u8350';card.appendChild(badge);}
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px';
+      var ico=document.createElement('div');ico.style.cssText='width:40px;height:40px;background:linear-gradient(135deg,#FFF0E0,#FFE4C4);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px';ico.textContent=pet.species==='cat'?'\uD83D\uDC31':'\uD83D\uDC36';
       var inf=document.createElement('div');inf.style.cssText='flex:1;min-width:0';
-      inf.innerHTML='<p style="font-size:11px;font-weight:700;color:#4A3E3D;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+r.sku.name+'</p>'
-        +'<p style="font-size:9px;color:#B0A89E;margin-top:1px">'+r.sku.brand+' · '+r.sku.weight+'kg · 可吃'+r.daysPerBag+'天</p>'
-        +'<p style="font-size:10px;margin-top:2px">月需<b style="color:#4A3E3D"> '+r.bagsPerMonth+'袋</b> · 月花费<b style="color:'+(r.withinBudget?'#7A9E8E':'#E57539')+'"> ¥'+r.monthlyCost+'</b></p>';
+      inf.innerHTML='<p style="font-size:11.5px;font-weight:700;color:#4A3E3D;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+r.sku.name+'</p>'
+        +'<p style="font-size:9.5px;color:#B8AFA6;margin-top:2px">'+r.sku.brand+' \u00B7 '+r.sku.weight+'kg \u00B7 \u5403'+r.daysPerBag+'\u5929</p>'
+        +'<p style="font-size:10px;margin-top:3px">\u6708\u9700<b style="color:#4A3E3D"> '+r.bagsPerMonth+'\u888B</b> \u00B7 <b style="color:'+(r.withinBudget?'#5C8070':'#E57539')+'">\xA5'+r.monthlyCost+'</b>/\u6708</p>';
       var bb=document.createElement('button');
-      bb.style.cssText='padding:7px 11px;border-radius:10px;border:none;background:'+(i===0?'linear-gradient(135deg,#FF8E53,#E57539)':'rgba(122,158,142,0.15)')+';color:'+(i===0?'#fff':'#5C8070')+';font-size:10.5px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap';
-      bb.textContent='京东购买';
+      bb.style.cssText='padding:8px 12px;border-radius:10px;border:none;background:'+(i===0?'linear-gradient(135deg,#FF8E53,#E57539)':'rgba(122,158,142,0.15)')+';color:'+(i===0?'#fff':'#5C8070')+';font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:.15s';
+      bb.textContent='\u4EAC\u4E1C\u8D2D\u4E70';
       bb.onclick=function(e){
         e.stopPropagation();
         saveFoodPurchase(pet.id,{petId:pet.id,petName:pet.name,skuId:r.sku.id,skuName:r.sku.name,brand:r.sku.brand,weightKg:r.sku.weight,price:r.sku.price,timestamp:new Date().toISOString()});
-        saveRili({type:'accounting',petName:pet.name,petId:pet.id,amount:r.sku.price*r.bagsPerMonth,category:'food',categoryName:'饮食',categoryIcon:'🍱',desc:'购买'+r.sku.name+' \xd7'+r.bagsPerMonth+'袋'});
+        saveRili({type:'accounting',petName:pet.name,petId:pet.id,amount:r.sku.price*r.bagsPerMonth,category:'food',categoryName:'\u996E\u98DF',categoryIcon:'\uD83C\uDF71',desc:'\u8D2D\u4E70'+r.sku.name+' \xd7'+r.bagsPerMonth+'\u888B'});
         window.open('https://item.jd.com/'+r.sku.sku+'.html','_blank');
       };
-      top.appendChild(ico);top.appendChild(inf);top.appendChild(bb);card.appendChild(top);
-      if(i===0){var star=document.createElement('p');star.style.cssText='font-size:9px;color:#C88A5A;font-weight:700';star.textContent='⭐ 最优推荐';card.insertBefore(star,top);}
+      row.appendChild(ico);row.appendChild(inf);row.appendChild(bb);card.appendChild(row);
       resultArea.appendChild(card);
     });
-    if(within.length===0){var tip=document.createElement('p');tip.style.cssText='font-size:10px;color:#B0A89E;text-align:center;margin-top:4px';tip.textContent='预算内暂无完全匹配，已显示最接近方案';resultArea.appendChild(tip);}
+    var spacer=document.createElement('div');spacer.style.height='12px';resultArea.appendChild(spacer);
   }
 
   panel.appendChild(scroll);
