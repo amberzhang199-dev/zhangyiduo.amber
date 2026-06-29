@@ -2403,23 +2403,23 @@ function showBudgetPanel(pets,defaultPet){
 
   /* ── 遮罩：磨砂半透明 ── */
   var mask=document.createElement('div');
-  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0 0 0 0';
+  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px';
 
   /* ── 面板：从底部上浮 ── */
   var panel=document.createElement('div');
-  var pw=Math.min(window.innerWidth,480);
-  var ph=Math.min(Math.round(pw*1.05),window.innerHeight*0.84,560);
+  var pw=Math.min(window.innerWidth-32,340);
+  var ph=Math.min(Math.round(pw*0.96),window.innerHeight*0.82,480);
   panel.style.cssText=[
     'background:#FAF6F0',
-    'border-radius:28px 28px 0 0',
+    'border-radius:28px',
     'width:100%',
-    'max-width:480px',
+    'max-width:360px',
     'height:'+ph+'px',
     'display:flex',
     'flex-direction:column',
     'overflow:hidden',
-    'box-shadow:0 -8px 32px rgba(74,62,61,0.13),0 -2px 8px rgba(74,62,61,0.06)',
-    'animation:budgetSlideUp .44s cubic-bezier(.34,1.3,.64,1) both',
+    'box-shadow:0 16px 48px rgba(74,62,61,0.14),0 4px 14px rgba(74,62,61,0.07)',
+    'animation:springIn .42s cubic-bezier(.34,1.56,.64,1) both',
     'position:relative'
   ].join(';');
 
@@ -2448,7 +2448,7 @@ function showBudgetPanel(pets,defaultPet){
   closeBtn.onmouseenter=function(){closeBtn.style.transform='scale(1.14)';closeBtn.style.background='#EDE5DA';};
   closeBtn.onmouseleave=function(){closeBtn.style.transform='scale(1)';closeBtn.style.background='#F3EDE4';};
   closeBtn.onclick=function(){
-    panel.style.animation='budgetSlideDown .3s cubic-bezier(.4,0,.6,1) both';
+    panel.style.animation='shrink .26s cubic-bezier(.4,0,.6,1) both';
     mask.style.animation='fadeOut .28s ease both';
     setTimeout(function(){mask.remove();},280);
   };
@@ -2628,7 +2628,7 @@ function showBudgetPanel(pets,defaultPet){
 
   mask.appendChild(panel);
   document.body.appendChild(mask);
-  mask.onclick=function(e){if(e.target===mask){panel.style.animation='budgetSlideDown .3s cubic-bezier(.4,0,.6,1) both';mask.style.animation='fadeOut .28s ease both';setTimeout(function(){mask.remove();},280);}};
+  mask.onclick=function(e){if(e.target===mask){panel.style.animation='shrink .26s cubic-bezier(.4,0,.6,1) both';mask.style.animation='fadeOut .28s ease both';setTimeout(function(){mask.remove();},280);}};
   rebuildContent();
 }
 
