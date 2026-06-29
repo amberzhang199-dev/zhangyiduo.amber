@@ -2320,7 +2320,7 @@ function showBadgeWall(pets){
       /* 贴纸图 */
       var stickerWrap=document.createElement('div');
       stickerWrap.style.cssText='width:54px;height:54px;margin:0 auto 6px;position:relative';
-      stickerWrap.innerHTML=getStickerSVG(stickerKey,54,unlocked);
+      stickerWrap.innerHTML=getStickerSVG(stickerKey,54,unlocked,pet.species);
       card.appendChild(stickerWrap);
 
       /* 名称 */
@@ -2390,7 +2390,7 @@ function showBadgePreview(badgeName,stickerKey,count,pet,allPets,unlocked){
   /* 大贴纸 */
   var bigSticker=document.createElement('div');
   bigSticker.style.cssText='width:100px;height:100px;margin:0 auto 14px';
-  bigSticker.innerHTML=getStickerSVG(stickerKey,100,unlocked);
+  bigSticker.innerHTML=getStickerSVG(stickerKey,100,unlocked,pet.species);
   box.appendChild(bigSticker);
 
   var nm=document.createElement('p');
@@ -2437,7 +2437,7 @@ function showBadgePreview(badgeName,stickerKey,count,pet,allPets,unlocked){
         msg.className='bmg';msg.style.cssText='background:linear-gradient(135deg,#FFF9F2,#FFF4E8);border-color:rgba(223,160,110,0.25)';
         msg.innerHTML='<p class="bnm">'+pet.name+'</p>'
           +'<div style="display:flex;align-items:center;gap:10px;padding:4px 0">'
-          +getStickerSVG(stickerKey,44,true)
+          +getStickerSVG(stickerKey,44,true,pet.species)
           +'<div><p style="font-size:13px;font-weight:800;color:#E57539">'+badgeName+'</p>'
           +'<p style="font-size:10px;color:#DFA06E;margin-top:2px">⭐ ×'+count+'</p></div>'
           +'</div>'
@@ -2462,25 +2462,180 @@ function showBadgePreview(badgeName,stickerKey,count,pet,allPets,unlocked){
   pv.onclick=function(e){if(e.target===pv)pv.remove();};
 }
 
-function getStickerSVG(key,size,unlocked){
-  var def=STICKER_DEFS[key]||STICKER_DEFS['paw'];
-  var bg=unlocked?def.bg:'#D8D4CF';
-  var fg=unlocked?def.fg:'#B0ABA6';
-  var sym=(def.symbol||'').replace(/\{bg\}/g,bg).replace(/\{fg\}/g,fg);
-  /* 白色模切白边 + 方格底纸风格 */
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">'
-    +'<rect width="32" height="32" rx="10" fill="#fff" opacity=".9"/>'
-    +'<rect x="1" y="1" width="30" height="30" rx="9" fill="'+bg+'"/>'
+function getStickerSVG(key,size,unlocked,species){
+  /* 圆形 pin 风格：外圈锯齿 + 内圆主图 + 宠物形象 */
+  var s=size||54;
+  var isDog=(species==='dog');
+  var gray=!unlocked;
+  var defs=gray?BADGE_PIN_GRAY:( isDog?BADGE_PIN_DOG:BADGE_PIN_CAT);
+  var d=defs[key]||defs['bath'];
+  var outerColor=gray?'#C8C4C0':d.outer;
+  var innerColor=gray?'#E0DCD8':d.inner;
+  var accentColor=gray?'#B0ABA6':d.accent;
+
+  /* 锯齿外圈：用多段弧形拼接 */
+  var teeth='';
+  var n=24,cx=50,cy=50,R=48,r=42;
+  for(var i=0;i<n;i++){
+    var a1=2*Math.PI*i/n-Math.PI/2;
+    var a2=2*Math.PI*(i+0.5)/n-Math.PI/2;
+    var a3=2*Math.PI*(i+1)/n-Math.PI/2;
+    teeth+=(i===0?'M':'L')+(cx+R*Math.cos(a1))+','+(cy+R*Math.sin(a1))
+      +' Q'+(cx+(R+4)*Math.cos(a2))+','+(cy+(R+4)*Math.sin(a2))+' '
+      +(cx+R*Math.cos(a3))+','+(cy+R*Math.sin(a3));
+  }
+  teeth+='Z';
+
+  var svg='<svg width="'+s+'" height="'+s+'" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+    /* 白色模切边 */
+    +'<circle cx="50" cy="50" r="50" fill="#fff"/>'
+    /* 锯齿外圈 */
+    +'<path d="'+teeth+'" fill="'+outerColor+'"/>'
+    /* 内圆 */
+    +'<circle cx="50" cy="50" r="38" fill="'+innerColor+'"/>'
     /* 方格纹理 */
-    +'<line x1="0" y1="8" x2="32" y2="8" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +'<line x1="0" y1="16" x2="32" y2="16" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +'<line x1="0" y1="24" x2="32" y2="24" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +'<line x1="8" y1="0" x2="8" y2="32" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +'<line x1="16" y1="0" x2="16" y2="32" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +'<line x1="24" y1="0" x2="24" y2="32" stroke="rgba(0,0,0,.04)" stroke-width=".5"/>'
-    +sym
+    +'<line x1="0" y1="30" x2="100" y2="30" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    +'<line x1="0" y1="50" x2="100" y2="50" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    +'<line x1="0" y1="70" x2="100" y2="70" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    +'<line x1="30" y1="0" x2="30" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    +'<line x1="50" y1="0" x2="50" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    +'<line x1="70" y1="0" x2="70" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
+    /* 宠物形象 */
+    +(isDog?drawDogBody(key,accentColor,innerColor,gray):drawCatBody(key,accentColor,innerColor,gray))
+    /* 小星星装饰 */
+    +(gray?'':('<text x="20" y="56" font-size="8" opacity=".5">★</text><text x="74" y="56" font-size="8" opacity=".5">★</text>'))
     +'</svg>';
+  return svg;
 }
+
+/* 狗狗形象绘制 - 根据徽章类型显示对应动作/道具 */
+function drawDogBody(key,ac,bg,gray){
+  var op=gray?'0.45':'1';
+  /* 通用狗狗脸型（奶油色柴柴风） */
+  var base='<ellipse cx="50" cy="55" rx="20" ry="18" fill="'+(gray?'#C8C4C0':'#F2D8B4')+'" opacity="'+op+'"/>'
+    /* 耳朵 */
+    +'<ellipse cx="33" cy="43" rx="8" ry="10" fill="'+(gray?'#B5B0AB':'#C8956A')+'" opacity="'+op+'"/>'
+    +'<ellipse cx="67" cy="43" rx="8" ry="10" fill="'+(gray?'#B5B0AB':'#C8956A')+'" opacity="'+op+'"/>'
+    +'<ellipse cx="33" cy="44" rx="5" ry="7" fill="'+(gray?'#D0CBC6':'#E8B88A')+'" opacity="'+op+'"/>'
+    +'<ellipse cx="67" cy="44" rx="5" ry="7" fill="'+(gray?'#D0CBC6':'#E8B88A')+'" opacity="'+op+'"/>'
+    /* 脸 */
+    +'<ellipse cx="50" cy="54" rx="17" ry="15" fill="'+(gray?'#D8D4D0':'#FDECD4')+'" opacity="'+op+'"/>'
+    /* 眼睛 */
+    +'<circle cx="43" cy="50" r="3" fill="'+(gray?'#8A8680':'#2D1A0E')+'" opacity="'+op+'"/>'
+    +'<circle cx="57" cy="50" r="3" fill="'+(gray?'#8A8680':'#2D1A0E')+'" opacity="'+op+'"/>'
+    +'<circle cx="44" cy="49" r="1" fill="#fff" opacity="'+(gray?'0.3':'0.7')+'"/>'
+    +'<circle cx="58" cy="49" r="1" fill="#fff" opacity="'+(gray?'0.3':'0.7')+'"/>'
+    /* 鼻子 */
+    +'<ellipse cx="50" cy="56" rx="3.5" ry="2.5" fill="'+(gray?'#7A7672':'#4A2C1A')+'" opacity="'+op+'"/>'
+    /* 嘴 */
+    +'<path d="M47 59 Q50 62 53 59" fill="none" stroke="'+(gray?'#7A7672':'#4A2C1A')+'" stroke-width="1.2" stroke-linecap="round" opacity="'+op+'"/>';
+
+  /* 根据徽章类型加道具 */
+  var props='';
+  if(key==='bath')props='<ellipse cx="50" cy="30" rx="12" ry="8" fill="'+(gray?'#A0D0E0':'#B8E8F0')+'" opacity="'+(gray?'0.3':'0.5')+'"/><circle cx="42" cy="25" r="3" fill="'+(gray?'#90C0D0':'#A0D8F0')+'" opacity="0.5"/><circle cx="52" cy="22" r="2" fill="'+(gray?'#90C0D0':'#A0D8F0')+'" opacity="0.4"/>';
+  else if(key==='scissors')props='<text x="62" y="40" font-size="14" opacity="'+(gray?'0.3':'0.7')+'">✂</text>';
+  else if(key==='needle')props='<rect x="62" y="30" width="14" height="3" rx="1.5" fill="'+(gray?'#A0C8A0':'#8CC88C')+'" opacity="0.6"/><circle cx="62" cy="31.5" r="2" fill="'+(gray?'#C0D8C0':'#AADAAA')+'" opacity="0.5"/>';
+  else if(key==='bowl')props='<ellipse cx="50" cy="72" rx="14" ry="5" fill="'+(gray?'#C0B8B0':'#DFA06E')+'" opacity="'+(gray?'0.3':'0.5')+'"/><text x="44" y="72" font-size="9" opacity="'+(gray?'0.3':'0.6')+'">🦴</text>';
+  else if(key==='walk')props='<text x="28" y="78" font-size="10" opacity="'+(gray?'0.3':'0.6')+'">🐾</text><text x="56" y="82" font-size="8" opacity="'+(gray?'0.3':'0.5')+'">🐾</text>';
+  else if(key==='bang')props='<text x="25" y="35" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">💥</text>';
+  else if(key==='heart')props='<text x="44" y="80" font-size="10" opacity="'+(gray?'0.3':'0.7')+'">💕</text>';
+  else if(key==='cake')props='<text x="42" y="80" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">🎂</text>';
+  else if(key==='sun')props='<text x="20" y="35" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">☀</text>';
+  else if(key==='star')props='<text x="60" y="35" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">⭐</text>';
+  else if(key==='paw')props='<text x="40" y="80" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">🐾</text>';
+  else if(key==='camera')props='<text x="60" y="38" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">📷</text>';
+  else if(key==='ball')props='<circle cx="30" cy="70" r="8" fill="'+(gray?'#B0D0B0':'#90C890')+'" opacity="'+(gray?'0.3':'0.5')+'"/><line x1="26" y1="66" x2="34" y2="74" stroke="#fff" stroke-width="1" opacity="0.5"/>';
+  else if(key==='grow')props='<text x="62" y="75" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">📏</text>';
+
+  return base+props;
+}
+
+/* 猫咪形象绘制 */
+function drawCatBody(key,ac,bg,gray){
+  var op=gray?'0.45':'1';
+  var base=
+    /* 尖耳朵 */
+    '<path d="M35 45 L30 28 L45 40Z" fill="'+(gray?'#B5B0AB':'#C8956A')+'" opacity="'+op+'"/>'
+    +'<path d="M65 45 L70 28 L55 40Z" fill="'+(gray?'#B5B0AB':'#C8956A')+'" opacity="'+op+'"/>'
+    +'<path d="M37 44 L33 32 L44 41Z" fill="'+(gray?'#D0A8A0':'#F0B0A0')+'" opacity="'+(gray?'0.4':'0.7')+'"/>'
+    +'<path d="M63 44 L67 32 L56 41Z" fill="'+(gray?'#D0A8A0':'#F0B0A0')+'" opacity="'+(gray?'0.4':'0.7')+'"/>'
+    /* 脸 */
+    +'<ellipse cx="50" cy="55" rx="18" ry="16" fill="'+(gray?'#D8D4D0':'#FDECD4')+'" opacity="'+op+'"/>'
+    /* 眼睛（杏仁形） */
+    +'<ellipse cx="42" cy="50" rx="4" ry="3" fill="'+(gray?'#8A8680':'#2D4A2A')+'" opacity="'+op+'"/>'
+    +'<ellipse cx="58" cy="50" rx="4" ry="3" fill="'+(gray?'#8A8680':'#2D4A2A')+'" opacity="'+op+'"/>'
+    +'<circle cx="43" cy="49" r="1.2" fill="#fff" opacity="'+(gray?'0.3':'0.7')+'"/>'
+    +'<circle cx="59" cy="49" r="1.2" fill="#fff" opacity="'+(gray?'0.3':'0.7')+'"/>'
+    /* 鼻子（小三角） */
+    +'<path d="M48 56 L52 56 L50 58.5Z" fill="'+(gray?'#C090A0':'#E8A0B0')+'" opacity="'+op+'"/>'
+    /* 嘴 */
+    +'<path d="M50 58.5 Q47 61 45 60" fill="none" stroke="'+(gray?'#8A8680':'#4A2C1A')+'" stroke-width="1" stroke-linecap="round" opacity="'+op+'"/>'
+    +'<path d="M50 58.5 Q53 61 55 60" fill="none" stroke="'+(gray?'#8A8680':'#4A2C1A')+'" stroke-width="1" stroke-linecap="round" opacity="'+op+'"/>'
+    /* 胡须 */
+    +'<line x1="28" y1="56" x2="44" y2="57" stroke="'+(gray?'#A0A09A':'#888080')+'" stroke-width="0.8" opacity="'+(gray?'0.3':'0.5')+'"/>'
+    +'<line x1="28" y1="59" x2="44" y2="59" stroke="'+(gray?'#A0A09A':'#888080')+'" stroke-width="0.8" opacity="'+(gray?'0.3':'0.4')+'"/>'
+    +'<line x1="56" y1="57" x2="72" y2="56" stroke="'+(gray?'#A0A09A':'#888080')+'" stroke-width="0.8" opacity="'+(gray?'0.3':'0.5')+'"/>'
+    +'<line x1="56" y1="59" x2="72" y2="59" stroke="'+(gray?'#A0A09A':'#888080')+'" stroke-width="0.8" opacity="'+(gray?'0.3':'0.4')+'"/>'
+    /* 腮红 */
+    +'<ellipse cx="38" cy="58" rx="5" ry="3" fill="'+(gray?'#C0A0A0':'#F0B0C0')+'" opacity="'+(gray?'0.2':'0.35')+'"/>'
+    +'<ellipse cx="62" cy="58" rx="5" ry="3" fill="'+(gray?'#C0A0A0':'#F0B0C0')+'" opacity="'+(gray?'0.2':'0.35')+'">';
+
+  /* 道具（与狗狗相同逻辑，但视觉上更精致） */
+  var props='</ellipse>';
+  if(key==='bath')props='</ellipse><text x="40" y="30" font-size="13" opacity="'+(gray?'0.3':'0.7')+'">🛁</text>';
+  else if(key==='scissors')props='</ellipse><text x="60" y="37" font-size="13" opacity="'+(gray?'0.3':'0.7')+'">✂</text>';
+  else if(key==='needle')props='</ellipse><text x="60" y="36" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">💉</text>';
+  else if(key==='bowl')props='</ellipse><text x="40" y="80" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">🍱</text>';
+  else if(key==='walk')props='</ellipse><text x="26" y="78" font-size="10" opacity="'+(gray?'0.3':'0.6')+'">🐾</text>';
+  else if(key==='bang')props='</ellipse><text x="24" y="35" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">💥</text>';
+  else if(key==='heart')props='</ellipse><text x="42" y="80" font-size="11" opacity="'+(gray?'0.3':'0.7')+'">💕</text>';
+  else if(key==='cake')props='</ellipse><text x="41" y="80" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">🎂</text>';
+  else if(key==='sun')props='</ellipse><text x="20" y="34" font-size="12" opacity="'+(gray?'0.3':'0.6')+'">🌸</text>';
+  else if(key==='star')props='</ellipse><text x="60" y="34" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">⭐</text>';
+  else if(key==='paw')props='</ellipse><text x="40" y="80" font-size="12" opacity="'+(gray?'0.3':'0.7')+'">🐾</text>';
+  else if(key==='camera')props='</ellipse><text x="60" y="37" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">📷</text>';
+  else if(key==='ball')props='</ellipse><text x="26" y="77" font-size="12" opacity="'+(gray?'0.3':'0.6')+'">🧶</text>';
+  else if(key==='grow')props='</ellipse><text x="61" y="75" font-size="11" opacity="'+(gray?'0.3':'0.6')+'">📐</text>';
+  else props='</ellipse>';
+
+  return base+props;
+}
+
+/* pin 配色方案 - 狗狗版（马卡龙低饱和） */
+var BADGE_PIN_DOG={
+  bath:    {outer:'#A8D8E8',inner:'#E8F6FA',accent:'#7BBDD4'},
+  scissors:{outer:'#D4B8E0',inner:'#F5EEF8',accent:'#B08CC0'},
+  needle:  {outer:'#B8D8B0',inner:'#EDF6EB',accent:'#8CB88A'},
+  bowl:    {outer:'#F0C898',inner:'#FDF5EA',accent:'#DFA06E'},
+  walk:    {outer:'#F0C898',inner:'#FDF5EA',accent:'#C88A5A'},
+  bang:    {outer:'#F0C898',inner:'#FFF3E0',accent:'#E8A060'},
+  heart:   {outer:'#F0B8C8',inner:'#FDF0F4',accent:'#D4957A'},
+  cake:    {outer:'#F0B8C8',inner:'#FDF0F4',accent:'#D4957A'},
+  sun:     {outer:'#F0D898',inner:'#FDF8E8',accent:'#C8A850'},
+  star:    {outer:'#F0D898',inner:'#FDF8E8',accent:'#D4B86A'},
+  paw:     {outer:'#F0C898',inner:'#FDF5EA',accent:'#C88A5A'},
+  camera:  {outer:'#B8D4F0',inner:'#EEF4FD',accent:'#8AB4D4'},
+  ball:    {outer:'#B8E0B8',inner:'#EDF8ED',accent:'#88C888'},
+  grow:    {outer:'#D4C8F0',inner:'#F2EFF8',accent:'#A898D0'}
+};
+
+/* pin 配色方案 - 猫咪版（更粉嫩） */
+var BADGE_PIN_CAT={
+  bath:    {outer:'#B8E0E8',inner:'#EAF7FA',accent:'#80C0D0'},
+  scissors:{outer:'#E0C0E8',inner:'#F8F0FA',accent:'#C090D0'},
+  needle:  {outer:'#B0D8B0',inner:'#EBF6EB',accent:'#80B880'},
+  bowl:    {outer:'#F0C8A0',inner:'#FEF5EC',accent:'#E0986E'},
+  walk:    {outer:'#F0C0A0',inner:'#FEF4EC',accent:'#C8886A'},
+  bang:    {outer:'#F8B8B0',inner:'#FFF0EE',accent:'#E89080'},
+  heart:   {outer:'#F8B8C8',inner:'#FEF0F5',accent:'#E090A8'},
+  cake:    {outer:'#F8B8C8',inner:'#FEF0F5',accent:'#E090A8'},
+  sun:     {outer:'#F8E0A0',inner:'#FFF9EC',accent:'#D0B060'},
+  star:    {outer:'#F8D898',inner:'#FFF7E8',accent:'#D0A858'},
+  paw:     {outer:'#F8C0B0',inner:'#FFF4F0',accent:'#E0906A'},
+  camera:  {outer:'#B0C8F0',inner:'#EBF2FD',accent:'#80A8E0'},
+  ball:    {outer:'#C8E8B8',inner:'#F0F9EA',accent:'#90C880'},
+  grow:    {outer:'#D8C0F0',inner:'#F4EDF8',accent:'#B090D0'}
+};
 
 var STICKER_DEFS={
   paw:{bg:'#F2D0B3',fg:'#C88A5A',symbol:'<circle cx="12" cy="10" r="3.5" fill="{fg}" opacity=".8"/><circle cx="6" cy="6" r="2.2" fill="{fg}" opacity=".6"/><circle cx="18" cy="6" r="2.2" fill="{fg}" opacity=".6"/><circle cx="8" cy="16" r="2" fill="{fg}" opacity=".5"/><circle cx="16" cy="16" r="2" fill="{fg}" opacity=".5"/>'},
