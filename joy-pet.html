@@ -334,6 +334,29 @@ ESTP:'嘿！刚才我在沙发上发现了个超好玩的洞！',ESFP:'派对开
 
 function loadMbtiQuestions(){ return new Promise(function(r){setTimeout(function(){r(Q);},120);}); }
 
+/* 问诊卡片提交 — 全局函数，避免内联 onclick 闭包问题 */
+var _diagInputRef=null;   /* renderChat 执行时赋值为当前 inp */
+var _diagSendRef=null;    /* renderChat 执行时赋值为当前 sendMessage */
+function _diagSubmit(btn){
+  var card=btn.closest('.diag-card');
+  var selected=[];
+  card.querySelectorAll('.diag-opt.selected .diag-opt-label').forEach(function(l){
+    selected.push(l.textContent.trim());
+  });
+  var noneSelected=card.querySelector('.diag-none.selected');
+  var summary=selected.length>0
+    ?'有以下情况：'+selected.join('、')
+    :(noneSelected?'以上情况都没有':'没有特别情况');
+  /* 禁用卡片防止重复提交 */
+  card.querySelectorAll('.diag-opt,.diag-none,.diag-submit').forEach(function(el){
+    el.style.pointerEvents='none';el.style.opacity='.5';
+  });
+  if(_diagInputRef&&_diagSendRef){
+    _diagInputRef.value=summary;
+    _diagSendRef();
+  }
+}
+
 /* ══════════════════════════════════════════════════
    MBTI Scoring with Environmental Weight
    ══════════════════════════════════════════════════ */
@@ -1371,6 +1394,8 @@ function renderChat(){
   /* ── Send message logic ── */
   var sending=false;
   var _butlerHistory=[];  /* 管家独立对话历史 */
+  /* 把当前 inp/sendMessage 暴露给全局 _diagSubmit */
+  _diagInputRef=inp;
 
   function sendMessage(){
     var text=inp.value.trim();
@@ -1503,7 +1528,7 @@ function renderChat(){
             }).join('')
             +'<div class="diag-none" onclick="this.classList.toggle(\'selected\')">以上都没有</div>'
             +'</div>'
-            +'<button class="diag-submit" onclick="(function(btn){var card=btn.closest(\'.diag-card\');var selected=[];card.querySelectorAll(\'.diag-opt.selected .diag-opt-label\').forEach(function(l){selected.push(l.textContent);});var noneSelected=card.querySelector(\'.diag-none.selected\');var summary=selected.length>0?\'有以下情况：\'+selected.join(\'、\'):(noneSelected?\'以上情况都没有\':\'没有特别情况\');card.querySelectorAll(\'.diag-opt,.diag-none,.diag-submit\').forEach(function(el){el.style.pointerEvents=\'none\';el.style.opacity=\'.6\';});inp.value=summary;sendMessage();})(this)">提交以上情况</button>'
+            +'<button class="diag-submit" onclick="_diagSubmit(this)">提交以上情况</button>'
             +'</div>'
             +(cleanAfter?'<p class="btx" style="margin-top:8px">'+cleanAfter+'</p>':'')
             +'</div>';
@@ -1552,6 +1577,7 @@ function renderChat(){
 
   sendBtn.onclick=sendMessage;
   inp.onkeydown=function(e){if(e.key==='Enter')sendMessage();};
+  _diagSendRef=sendMessage;  /* 暴露给全局 _diagSubmit */
 
   /* ── Image upload handler: preview first, send with text ── */
   var _pendingImg=null;
