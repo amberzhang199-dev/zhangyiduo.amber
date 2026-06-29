@@ -2216,6 +2216,146 @@ function detectAndSaveAccounting(text,pets){
 }
 
 /* ══════════════════════════════════════════════════
+   FOOD SHOP — 京东粮品推荐 & 复购提醒
+   ══════════════════════════════════════════════════ */
+var JD_SKU={
+  cat:{
+    kitten:[
+      {id:'cat_k1',name:'皇家幼猫粮K36',brand:'Royal Canin皇家',weight:2,unit:'kg',price:218,sku:'10021193',tag:'兽医推荐'},
+      {id:'cat_k2',name:'希尔斯幼猫粮',brand:'Hills希尔斯',weight:1.58,unit:'kg',price:189,sku:'100013283',tag:'营养均衡'},
+      {id:'cat_k3',name:'耐威克无谷幼猫粮',brand:'Navarch耐威克',weight:3,unit:'kg',price:128,sku:'100013284',tag:'性价比高'}
+    ],
+    adult:[
+      {id:'cat_a1',name:'皇家成猫粮F32',brand:'Royal Canin皇家',weight:4,unit:'kg',price:298,sku:'1666792',tag:'兽医首选'},
+      {id:'cat_a2',name:'渴望无谷成猫粮',brand:'Orijen渴望',weight:5.4,unit:'kg',price:568,sku:'100007575',tag:'高蛋白'},
+      {id:'cat_a3',name:'冠能成猫粮Pro Plan',brand:'Purina冠能',weight:7,unit:'kg',price:338,sku:'100011451',tag:'热销爆款'}
+    ],
+    senior:[
+      {id:'cat_s1',name:'皇家老年猫粮+7',brand:'Royal Canin皇家',weight:3.5,unit:'kg',price:268,sku:'1666800',tag:'关节护理'},
+      {id:'cat_s2',name:'希尔斯老年猫粮',brand:'Hills希尔斯',weight:2,unit:'kg',price:219,sku:'100013285',tag:'低磷配方'}
+    ]
+  },
+  dog:{
+    kitten:[
+      {id:'dog_k1',name:'皇家幼犬粮MED30',brand:'Royal Canin皇家',weight:4,unit:'kg',price:328,sku:'1666810',tag:'兽医推荐'},
+      {id:'dog_k2',name:'冠能幼犬成长粮',brand:'Purina冠能',weight:7.5,unit:'kg',price:398,sku:'100011452',tag:'热销爆款'},
+      {id:'dog_k3',name:'麦富迪幼犬粮',brand:'麦富迪',weight:5,unit:'kg',price:158,sku:'100013286',tag:'性价比高'}
+    ],
+    adult:[
+      {id:'dog_a1',name:'皇家成犬粮MAXI',brand:'Royal Canin皇家',weight:10,unit:'kg',price:488,sku:'1666820',tag:'兽医首选'},
+      {id:'dog_a2',name:'渴望无谷成犬粮',brand:'Orijen渴望',weight:6,unit:'kg',price:628,sku:'100007576',tag:'高蛋白'},
+      {id:'dog_a3',name:'冠能成犬活力粮',brand:'Purina冠能',weight:12,unit:'kg',price:428,sku:'100011453',tag:'热销爆款'}
+    ],
+    senior:[
+      {id:'dog_s1',name:'皇家老年犬粮+8',brand:'Royal Canin皇家',weight:3.5,unit:'kg',price:298,sku:'1666830',tag:'关节护理'},
+      {id:'dog_s2',name:'希尔斯老年犬粮',brand:'Hills希尔斯',weight:5.4,unit:'kg',price:368,sku:'100013287',tag:'低脂配方'}
+    ]
+  }
+};
+
+function getPetAgeGroup(pet){var a=parseInt(pet.age)||0;return a<1?'kitten':a>=7?'senior':'adult';}
+function getRecommendedSkus(pet){var sp=pet.species==='dog'?'dog':'cat';var gr=getPetAgeGroup(pet);return(JD_SKU[sp]&&JD_SKU[sp][gr])||JD_SKU[sp].adult||[];}
+function estimateDailyIntake(pet){var w=parseFloat(pet.weight)||(pet.species==='dog'?10:4);var gr=getPetAgeGroup(pet);if(pet.species==='cat'){return gr==='kitten'?Math.round(w*30):gr==='senior'?Math.round(w*20):Math.round(w*25);}return gr==='kitten'?Math.round(w*60):gr==='senior'?Math.round(w*30):Math.round(w*40);}
+function getFoodRecords(petId){return loadUD('food_records',[]).filter(function(r){return r.petId===petId;});}
+function saveFoodRecord(petId,petName,sku,wKg){var all=loadUD('food_records',[]);all.push({petId:petId,petName:petName,skuId:sku.id,skuName:sku.name,brand:sku.brand,weightKg:wKg,price:sku.price,timestamp:new Date().toISOString(),date:new Date().toLocaleDateString('zh-CN')});saveUD('food_records',all);}
+function getDaysRemaining(pet,rec){var dG=estimateDailyIntake(pet);var elapsed=Math.floor((Date.now()-new Date(rec.timestamp).getTime())/(864e5));return Math.floor(rec.weightKg*1000/dG)-elapsed;}
+function getJdUrl(sku){return 'https://item.jd.com/'+sku.sku+'.html';}
+
+function renderFoodRecommendCard(pet,container){
+  var skus=getRecommendedSkus(pet);if(!skus.length)return;
+  var card=document.createElement('div');
+  card.style.cssText='margin:0 12px 10px;background:linear-gradient(135deg,#FFFBF5,#FFF7EE);border-radius:16px;padding:14px;border:1px solid rgba(223,160,110,0.2)';
+  card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    +'<div><p style="font-size:12px;font-weight:700;color:#4A3E3D">\uD83D\uDED2 为'+pet.name+'推荐的粮品</p>'
+    +'<p style="font-size:10px;color:#A89E9D;margin-top:1px">根据年龄和物种智能匹配</p></div>'
+    +'<span style="font-size:9px;background:rgba(223,160,110,0.15);color:#C88A5A;padding:2px 7px;border-radius:99px;font-weight:600">首次推荐</span></div>';
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch';
+  skus.slice(0,3).forEach(function(sku){
+    var item=document.createElement('div');
+    item.style.cssText='flex-shrink:0;width:110px;background:#fff;border-radius:12px;padding:8px;border:1px solid rgba(223,160,110,0.15);cursor:pointer;transition:.15s';
+    item.innerHTML='<div style="width:100%;height:70px;background:#F5F0EA;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:5px"><span style="font-size:28px">'+(pet.species==='cat'?'\uD83D\uDC31':'\uD83D\uDC36')+'</span></div>'
+      +'<p style="font-size:10px;font-weight:700;color:#4A3E3D;line-height:1.3;margin-bottom:2px">'+sku.name+'</p>'
+      +'<p style="font-size:9px;color:#A89E9D;margin-bottom:3px">'+sku.weight+sku.unit+'</p>'
+      +'<p style="font-size:11px;font-weight:800;color:#E57539;margin-bottom:4px">\uFFE5'+sku.price+'</p>'
+      +'<span style="font-size:8px;background:rgba(122,158,142,0.12);color:#7A9E8E;padding:1px 5px;border-radius:99px;font-weight:600">'+sku.tag+'</span>';
+    item.onclick=function(){showFoodOrderConfirm(pet,sku);};
+    item.onmouseenter=function(){item.style.transform='translateY(-2px)';item.style.boxShadow='0 4px 12px rgba(223,160,110,0.15)';};
+    item.onmouseleave=function(){item.style.transform='';item.style.boxShadow='';};
+    row.appendChild(item);
+  });
+  card.appendChild(row);container.appendChild(card);
+}
+
+function renderRestockCard(pet,lastRecord,daysLeft,container){
+  var skus=getRecommendedSkus(pet);
+  var lastSku=skus.find(function(s){return s.id===lastRecord.skuId;})||skus[0];
+  var altSkus=skus.filter(function(s){return s.id!==lastRecord.skuId;}).slice(0,2);
+  var urgent=daysLeft<=3;
+  var ac=urgent?'#E57539':'#7A9E8E';
+  var bg=urgent?'linear-gradient(135deg,#FFF8F5,#FFF3EE)':'linear-gradient(135deg,#F5FAF8,#EEF6F3)';
+  var card=document.createElement('div');
+  card.style.cssText='margin:0 12px 10px;background:'+bg+';border-radius:16px;padding:14px;border:1px solid rgba('+(urgent?'229,117,57':'122,158,142')+',0.2)';
+  var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  hdr.innerHTML='<span style="font-size:18px">'+(urgent?'\u26A0\uFE0F':'\uD83D\uDD14')+'</span>'
+    +'<div style="flex:1"><p style="font-size:12px;font-weight:700;color:#4A3E3D">'+(urgent?pet.name+'的粮快吃完了！':pet.name+'的粮快不够了')+'</p>'
+    +'<p style="font-size:10px;color:'+ac+';font-weight:600;margin-top:1px">预计还剩 '+Math.max(0,daysLeft)+' 天</p></div>'
+    +'<span style="font-size:9px;background:rgba('+(urgent?'229,117,57':'122,158,142')+',0.12);color:'+ac+';padding:2px 7px;border-radius:99px;font-weight:700">'+(urgent?'紧急补货':'提前备货')+'</span>';
+  card.appendChild(hdr);
+  if(lastSku){
+    var sl=document.createElement('p');sl.style.cssText='font-size:10px;color:#A89E9D;margin-bottom:5px;font-weight:600';sl.textContent='上次购买';card.appendChild(sl);
+    var sb=document.createElement('div');
+    sb.style.cssText='display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px;border:1.5px solid '+ac+';cursor:pointer;margin-bottom:8px';
+    sb.innerHTML='<div style="width:44px;height:44px;background:#F5F0EA;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:22px">'+(pet.species==='cat'?'\uD83D\uDC31':'\uD83D\uDC36')+'</span></div>'
+      +'<div style="flex:1;min-width:0"><p style="font-size:11px;font-weight:700;color:#4A3E3D;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+lastSku.name+'</p>'
+      +'<p style="font-size:9px;color:#A89E9D">'+lastSku.weight+lastSku.unit+' · '+lastSku.brand+'</p>'
+      +'<p style="font-size:12px;font-weight:800;color:#E57539">\uFFE5'+lastSku.price+'</p></div>'
+      +'<button style="padding:7px 12px;border-radius:10px;background:'+ac+';color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap">再买一袋</button>';
+    sb.querySelector('button').onclick=function(e){e.stopPropagation();showFoodOrderConfirm(pet,lastSku);};
+    sb.onclick=function(){showFoodOrderConfirm(pet,lastSku);};card.appendChild(sb);
+  }
+  if(altSkus.length){
+    var al=document.createElement('p');al.style.cssText='font-size:10px;color:#A89E9D;margin-bottom:5px;font-weight:600';al.textContent='同配方备选';card.appendChild(al);
+    var ar=document.createElement('div');ar.style.cssText='display:flex;gap:6px';
+    altSkus.forEach(function(sku){
+      var ai=document.createElement('div');ai.style.cssText='flex:1;background:#fff;border-radius:10px;padding:8px;border:1px solid rgba(74,62,61,0.08);cursor:pointer;text-align:center';
+      ai.innerHTML='<p style="font-size:10px;font-weight:700;color:#4A3E3D;line-height:1.3;margin-bottom:2px">'+sku.name.substring(0,10)+'</p>'
+        +'<p style="font-size:9px;color:#A89E9D;margin-bottom:2px">'+sku.weight+sku.unit+'</p>'
+        +'<p style="font-size:11px;font-weight:800;color:#E57539">\uFFE5'+sku.price+'</p>';
+      ai.onclick=function(){showFoodOrderConfirm(pet,sku);};ar.appendChild(ai);
+    });
+    card.appendChild(ar);
+  }
+  container.appendChild(card);
+}
+
+function showFoodOrderConfirm(pet,sku){
+  var mask=document.createElement('div');
+  mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.5);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box=document.createElement('div');
+  box.style.cssText='background:#FFFDF9;border-radius:20px;padding:22px 18px;width:100%;max-width:320px';
+  box.innerHTML='<p style="font-size:15px;font-weight:800;color:#4A3E3D;margin-bottom:3px">\uD83D\uDED2 '+sku.name+'</p>'
+    +'<p style="font-size:11px;color:#A89E9D;margin-bottom:12px">'+sku.brand+' · 为 '+pet.name+' 推荐</p>'
+    +'<p style="font-size:22px;font-weight:800;color:#E57539;margin-bottom:14px">\uFFE5'+sku.price+'</p>'
+    +'<p style="font-size:11px;color:#7A6E6D;margin-bottom:6px;font-weight:600">购买重量（kg）—— 用于计算补货时间</p>';
+  var wi=document.createElement('input');wi.type='number';wi.step='0.5';wi.min='0.5';wi.max='20';wi.value=sku.weight;
+  wi.style.cssText='width:100%;padding:10px;border-radius:12px;border:1.5px solid rgba(74,62,61,0.15);background:#FAF6F0;font-size:15px;font-weight:700;color:#4A3E3D;margin-bottom:14px;box-sizing:border-box;text-align:center';
+  box.appendChild(wi);
+  var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px';
+  var cb=document.createElement('button');cb.style.cssText='flex:1;padding:11px;border-radius:12px;border:1.5px solid rgba(74,62,61,0.12);background:#F3EDE4;color:#7A6E6D;font-size:13px;font-weight:600;cursor:pointer';cb.textContent='取消';cb.onclick=function(){mask.remove();};
+  var ob=document.createElement('button');ob.style.cssText='flex:1;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#FF8E53,#E57539);color:#fff;font-size:13px;font-weight:700;cursor:pointer';ob.textContent='去京东下单 →';
+  ob.onclick=function(){
+    var w=parseFloat(wi.value)||sku.weight;
+    saveFoodRecord(pet.id,pet.name,sku,w);
+    saveRili({type:'accounting',petName:pet.name,petId:pet.id,amount:sku.price,category:'food',categoryName:'饮食',categoryIcon:'\uD83C\uDF71',desc:'购买'+sku.name+' '+w+'kg'});
+    mask.remove();window.open(getJdUrl(sku),'_blank');
+  };
+  btns.appendChild(cb);btns.appendChild(ob);box.appendChild(btns);
+  mask.appendChild(box);document.body.appendChild(mask);
+  mask.onclick=function(e){if(e.target===mask)mask.remove();};
+}
+
+/* ══════════════════════════════════════════════════
    RILI PAGE — 宠物日历渲染
    ══════════════════════════════════════════════════ */
 var SCENE_STICKERS={
@@ -2804,6 +2944,18 @@ function renderRiliPage(container,pets){
   /* 徽章入口点击 */
   var badgeEntry=rili.querySelector('#badge-entry');
   if(badgeEntry)badgeEntry.onclick=function(){showBadgeWall(pets);};
+
+  /* ── 粮品推荐 & 复购提醒卡片 ── */
+  pets.forEach(function(pet){
+    var records=getFoodRecords(pet.id);
+    if(!records.length){
+      renderFoodRecommendCard(pet,rili);
+    }else{
+      var lastRecord=records[records.length-1];
+      var daysLeft=getDaysRemaining(pet,lastRecord);
+      if(daysLeft<=10){renderRestockCard(pet,lastRecord,daysLeft,rili);}
+    }
+  });
 
   /* Accounting section — 月度账单卡片 */
   var acctRecords=_rili.filter(function(r){return r.type==='accounting';});
