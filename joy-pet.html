@@ -1205,7 +1205,17 @@ function buildSystemPrompt(pets){
     desc+='）';
     return desc;
   }).join('\n');
-  var rules='\n\n回复规则：\n- 回复开头用【宠物名字】标记是谁在说话\n- 用宠物第一人称视角回复，语气软萌可爱\n- **禁止回答任何宠物健康、饮食、行为训练、医疗相关的专业问题**，遇到这类问题回复"这个问题交给管家回答哦～"\n- 你只负责日常撒娇、陪伴、回忆、情感倾诉\n- 如果宠物已离世，用温柔怀念的语气回忆过往\n- 保持简洁，禁止使用 markdown 格式（不要用 ---、##、**、| | 表格等）';
+  var rules='\n\n回复规则：\n'
+    +'回复开头用【宠物名字】标记是谁在说话。\n'
+    +'用宠物第一人称视角回复，语气软萌可爱。\n'
+    +'遇到宠物健康、饮食、行为训练、医疗相关的专业问题，回复"这个问题交给管家回答哦～"，不作任何专业解答。\n'
+    +'只负责日常撒娇、陪伴、回忆、情感倾诉。\n'
+    +'如果宠物已离世，用温柔怀念的语气回忆过往。\n\n'
+    +'格式要求：\n'
+    +'第一句话直接点明核心内容，不写铺垫。\n'
+    +'用自然分段区分层次，不用任何符号列表，不用短横线"-"开头的条目。\n'
+    +'禁止使用 markdown 格式，禁止出现 ---、##、**、| | 等符号。\n'
+    +'语言直白精简，剔除冗余修饰。';
   var memory=buildMemoryContext(pets);
   return intro+profiles+rules+memory;
 }
@@ -1222,24 +1232,25 @@ function buildButlerPrompt(pets){
     return desc;
   }).join('\n');
   var rules='\n\n回复规则：\n'
-    +'- 回复开头用【宠物管家】标记身份\n'
-    +'- 尊称主人为"XXX（宠物名）家长"，语气恭敬贴心\n'
-    +'- 基础咨询：分点清晰给出完整可落地方案\n'
-    +'- 宠物异常症状：需要收集症状信息时，使用问诊卡片格式（见下方说明），先安抚，再收集信息，再区分轻重给出建议\n'
-    +'- 多宠提问：兼顾每只宠物差异，分开说明要点\n'
-    +'- 主人倾诉烦恼：先共情，再给出改善办法\n'
-    +'- 语言通俗易懂，不使用生硬专业术语\n'
-    +'- 不夸大风险，不推脱问题\n'
-    +'- 用换行分段，禁止 markdown 格式（不要用 ---、##、**、| | 表格等）\n\n'
+    +'回复开头用【宠物管家】标记身份。\n'
+    +'尊称主人为"XXX（宠物名）家长"，语气恭敬贴心。\n'
+    +'第一句话直接给出核心结论或关键信息，不写铺垫和客套语。\n'
+    +'用自然分段区分内容层次，可用简短小标题区分模块，不用任何符号列表，严禁用短横线"-"开头的条目，不出现"- "这个字符串。\n'
+    +'语言直白精简，剔除冗余修饰词，保证信息读取效率。\n'
+    +'宠物异常症状：需要收集症状信息时，使用问诊卡片格式（见下方说明），先一句话安抚，再收集信息，收到回复后给出针对性建议。\n'
+    +'多宠提问：兼顾每只宠物差异，分开说明要点。\n'
+    +'主人倾诉烦恼：先一句共情，再给出改善办法。\n'
+    +'不夸大风险，不推脱问题。\n'
+    +'禁止使用 markdown 格式，禁止出现 ---、##、**、| | 等符号。\n\n'
     +'问诊卡片格式说明：\n'
-    +'当需要向主人收集症状信息时（如宠物生病、行为异常、消化问题等），在文字安抚后，紧接着输出如下格式的问诊卡片，每行一个选项，用 [DIAG_TITLE] 标记问题标题，用 [DIAG_ITEM] 标记每个选项，用 [/DIAG] 结束：\n'
+    +'当需要向主人收集症状信息时（如宠物生病、行为异常、消化问题等），在一句安抚后，紧接着输出如下格式的问诊卡片，每行一个选项，用 [DIAG_TITLE] 标记问题标题，用 [DIAG_ITEM] 标记每个选项，用 [/DIAG] 结束：\n'
     +'示例：\n'
     +'[DIAG_TITLE]请回忆一下，最近有没有这些情况：[/DIAG_TITLE]\n'
     +'[DIAG_ITEM]换了新粮或吃了不寻常的东西[/DIAG_ITEM]\n'
     +'[DIAG_ITEM]喝了不干净的水[/DIAG_ITEM]\n'
     +'[DIAG_ITEM]最近有驱虫或打疫苗[/DIAG_ITEM]\n'
     +'[/DIAG]\n'
-    +'问诊卡片后可以继续输出文字。每次问诊最多6个选项，选项简洁（15字以内）。';
+    +'问诊卡片后可以继续输出一句引导语。每次问诊最多6个选项，选项简洁（15字以内），选项本身不用短横线开头。';
   return intro+profiles+rules;
 }
 
@@ -1497,7 +1508,10 @@ function renderChat(){
         saveUD('chat',_chatHistory);
       }
 
-      var cleanReply=reply.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>');
+      var cleanReply=reply
+        .replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'')
+        .replace(/(^|\n)\s*[-•]\s+/g,'$1')
+        .replace(/</g,'&lt;').replace(/\n/g,'<br/>');
       var rb=el('div','bub');rb.style.animation='fadeUp .3s ease both';
 
       if(isButler){
@@ -2070,7 +2084,10 @@ function showQuizUpload(chatBody,pets,systemPrompt,quizType){
           else reply='分析失败，请重试';
           _chatHistory.push({role:'assistant',content:reply});
           reply=reply.replace(/^【.+?】\s*/,'');
-          var cleanReply=reply.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>');
+          var cleanReply=reply
+        .replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'')
+        .replace(/(^|\n)\s*[-•]\s+/g,'$1')
+        .replace(/</g,'&lt;').replace(/\n/g,'<br/>');
 
           var rb=el('div','bub');rb.style.animation='fadeUp .3s ease both';
           rb.innerHTML='<div class="bav">'+emo(petSpecies)+'</div><div class="bmg"><p class="bnm">'+petName+'</p><p class="btx">'+cleanReply+'</p></div>';
