@@ -1504,37 +1504,64 @@ function renderChat(){
         /* 管家气泡：解析问诊卡片 [DIAG_TITLE]...[DIAG_ITEM]...[/DIAG] */
         var rawReply=reply.replace(/^【宠物管家】\s*/,'');
         var diagMatch=rawReply.match(/\[DIAG_TITLE\]([\s\S]*?)\[\/DIAG_TITLE\]([\s\S]*?)\[\/DIAG\]/);
+
+        var bav=el('div','bav butler');bav.textContent='🎩';
+        var bmg=el('div','bmg butler');bmg.style.maxWidth='88%';
+        var bnm=el('p','bnm butler');bnm.textContent='🎩 宠物管家';
+        bmg.appendChild(bnm);
+        rb.appendChild(bav);rb.appendChild(bmg);
+
         if(diagMatch){
-          /* 拆分卡片前文字、问诊块、卡片后文字 */
           var beforeDiag=rawReply.slice(0,rawReply.indexOf('[DIAG_TITLE]'));
           var afterDiag=rawReply.slice(rawReply.indexOf('[/DIAG]')+7);
           var diagTitle=diagMatch[1].trim();
           var itemMatches=[...rawReply.matchAll(/\[DIAG_ITEM\]([\s\S]*?)\[\/DIAG_ITEM\]/g)];
           var diagItems=itemMatches.map(function(m){return m[1].trim();});
 
-          var cleanBefore=beforeDiag.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>').trim();
-          var cleanAfter=afterDiag.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>').trim();
+          var cleanBefore=beforeDiag.replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').trim();
+          var cleanAfter=afterDiag.replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').trim();
 
-          rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler" style="max-width:88%"><p class="bnm butler">🎩 宠物管家</p>'
-            +(cleanBefore?'<p class="btx" style="margin-bottom:8px">'+cleanBefore+'</p>':'')
-            +'<div class="diag-card">'
-            +'<p class="diag-title">'+diagTitle.replace(/</g,'&lt;')+'</p>'
-            +'<div class="diag-options">'
-            +diagItems.map(function(item){
-              return '<div class="diag-opt" onclick="this.classList.toggle(\'selected\')">'
-                +'<div class="diag-opt-dot"></div>'
-                +'<span class="diag-opt-label">'+item.replace(/</g,'&lt;')+'</span>'
-                +'</div>';
-            }).join('')
-            +'<div class="diag-none" onclick="this.classList.toggle(\'selected\')">以上都没有</div>'
-            +'</div>'
-            +'<button class="diag-submit" onclick="_diagSubmit(this)">提交以上情况</button>'
-            +'</div>'
-            +(cleanAfter?'<p class="btx" style="margin-top:8px">'+cleanAfter+'</p>':'')
-            +'</div>';
+          if(cleanBefore){var pb=el('p','btx');pb.style.marginBottom='8px';pb.textContent=cleanBefore;bmg.appendChild(pb);}
+
+          /* 问诊卡片 DOM */
+          var card=el('div','diag-card');
+          var titleEl=el('p','diag-title');titleEl.textContent=diagTitle;card.appendChild(titleEl);
+          var opts=el('div','diag-options');
+
+          diagItems.forEach(function(item){
+            var opt=el('div','diag-opt');
+            var dot=el('div','diag-opt-dot');
+            var lbl=el('span','diag-opt-label');lbl.textContent=item;
+            opt.appendChild(dot);opt.appendChild(lbl);
+            opt.addEventListener('click',function(){opt.classList.toggle('selected');});
+            opts.appendChild(opt);
+          });
+
+          var noneOpt=el('div','diag-none');noneOpt.textContent='以上都没有';
+          noneOpt.addEventListener('click',function(){noneOpt.classList.toggle('selected');});
+          opts.appendChild(noneOpt);
+          card.appendChild(opts);
+
+          var submitBtn=el('button','diag-submit');submitBtn.textContent='提交以上情况';
+          submitBtn.addEventListener('click',function(){
+            var selected=[];
+            opts.querySelectorAll('.diag-opt.selected .diag-opt-label').forEach(function(l){selected.push(l.textContent.trim());});
+            var isNone=noneOpt.classList.contains('selected');
+            var summary=selected.length>0?'有以下情况：'+selected.join('、'):(isNone?'以上情况都没有':'没有特别情况');
+            /* 禁用卡片防重复提交 */
+            card.querySelectorAll('.diag-opt,.diag-none,.diag-submit').forEach(function(el){el.style.pointerEvents='none';el.style.opacity='.5';});
+            inp.value=summary;
+            sendMessage();
+          });
+          card.appendChild(submitBtn);
+          bmg.appendChild(card);
+
+          if(cleanAfter){var pa=el('p','btx');pa.style.marginTop='8px';pa.textContent=cleanAfter;bmg.appendChild(pa);}
+
         }else{
-          var butlerReply=cleanReply.replace(/^【宠物管家】\s*/,'');
-          rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler"><p class="bnm butler">🎩 宠物管家</p><p class="btx">'+butlerReply+'</p></div>';
+          var btx=el('p','btx');
+          btx.innerHTML=rawReply.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>');
+          bmg.appendChild(btx);
         }
       }else{
         /* 宠物气泡：解析【宠物名】前缀 */
