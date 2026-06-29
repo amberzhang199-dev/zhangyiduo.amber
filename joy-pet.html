@@ -167,28 +167,28 @@ select.inp{-webkit-appearance:none;-moz-appearance:none;appearance:none;backgrou
 .bub{display:flex;align-items:flex-start;gap:8px}
 .bav{width:30px;height:30px;border-radius:50%;background:var(--crd);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid var(--bd)}
 /* 管家专属头像样式 */
-.bav.butler{background:linear-gradient(135deg,#6B46C1,#9F7AEA);border-color:rgba(107,70,193,0.3)}
+.bav.butler{background:linear-gradient(135deg,#7A9E8E,#9BB8AC);border-color:rgba(122,158,142,0.3)}
 .bmg{background:var(--pp);border-radius:22px;border-top-left-radius:6px;padding:10px 14px;border:1px solid var(--bd);max-width:78%}
 /* 管家专属气泡样式 */
-.bmg.butler{background:linear-gradient(135deg,rgba(107,70,193,0.08),rgba(159,122,234,0.08));border-color:rgba(107,70,193,0.2)}
+.bmg.butler{background:linear-gradient(135deg,rgba(122,158,142,0.08),rgba(155,184,172,0.06));border-color:rgba(122,158,142,0.2)}
 .bnm{font-size:10.5px;font-weight:700;color:var(--or);margin-bottom:3px}
 /* 管家名字颜色 */
-.bnm.butler{color:#6B46C1}
+.bnm.butler{color:#7A9E8E}
 /* 问诊卡片 */
-.diag-card{margin-top:10px;background:rgba(107,70,193,0.05);border:1px solid rgba(107,70,193,0.2);border-radius:14px;padding:10px 12px;max-width:100%}
-.diag-title{font-size:12px;color:#6B46C1;font-weight:600;margin-bottom:8px;line-height:1.5}
+.diag-card{margin-top:10px;background:rgba(122,158,142,0.05);border:1px solid rgba(122,158,142,0.2);border-radius:14px;padding:10px 12px;max-width:100%}
+.diag-title{font-size:12px;color:#7A9E8E;font-weight:600;margin-bottom:8px;line-height:1.5}
 .diag-options{display:flex;flex-direction:column;gap:6px}
-.diag-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1.5px solid rgba(107,70,193,0.2);background:#fff;cursor:pointer;transition:.15s;user-select:none}
+.diag-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1.5px solid rgba(122,158,142,0.2);background:#fff;cursor:pointer;transition:.15s;user-select:none}
 .diag-opt:active{transform:scale(.98)}
-.diag-opt.selected{border-color:#6B46C1;background:rgba(107,70,193,0.08)}
-.diag-opt-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(107,70,193,0.35);flex-shrink:0;transition:.15s;display:flex;align-items:center;justify-content:center}
-.diag-opt.selected .diag-opt-dot{background:#6B46C1;border-color:#6B46C1}
+.diag-opt.selected{border-color:#7A9E8E;background:rgba(122,158,142,0.08)}
+.diag-opt-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(122,158,142,0.35);flex-shrink:0;transition:.15s;display:flex;align-items:center;justify-content:center}
+.diag-opt.selected .diag-opt-dot{background:#7A9E8E;border-color:#7A9E8E}
 .diag-opt.selected .diag-opt-dot::after{content:'✓';font-size:9px;color:#fff;font-weight:700}
 .diag-opt-label{font-size:12.5px;color:#4A3E3D;line-height:1.4;flex:1}
-.diag-opt.selected .diag-opt-label{color:#6B46C1;font-weight:600}
-.diag-none{padding:8px 10px;border-radius:10px;border:1.5px dashed rgba(107,70,193,0.2);background:transparent;cursor:pointer;font-size:12px;color:#9F7AEA;text-align:center;transition:.15s}
+.diag-opt.selected .diag-opt-label{color:#7A9E8E;font-weight:600}
+.diag-none{padding:8px 10px;border-radius:10px;border:1.5px dashed rgba(122,158,142,0.2);background:transparent;cursor:pointer;font-size:12px;color:#9BB8AC;text-align:center;transition:.15s}
 .diag-none:active{transform:scale(.98)}
-.diag-submit{margin-top:8px;width:100%;padding:9px;border-radius:10px;background:linear-gradient(135deg,#6B46C1,#9F7AEA);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:.15s}
+.diag-submit{margin-top:8px;width:100%;padding:9px;border-radius:10px;background:linear-gradient(135deg,#7A9E8E,#9BB8AC);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:.15s}
 .diag-submit:active{transform:scale(.98);filter:brightness(.95)}
 .btx{font-size:13.5px;line-height:1.65;color:var(--ink)}
 .cht-i{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--pp);border-top:1px solid var(--bd);flex-shrink:0}
@@ -1285,7 +1285,7 @@ function renderChat(){
     avw.appendChild(a);
   });
   /* 管家头像 */
-  var butlerAv=el('div','av');butlerAv.style.cssText='margin-left:-10px;z-index:0;background:linear-gradient(135deg,#6B46C1,#9F7AEA);border-color:rgba(107,70,193,0.3)';
+  var butlerAv=el('div','av');butlerAv.style.cssText='margin-left:-10px;z-index:0;background:linear-gradient(135deg,#7A9E8E,#9BB8AC);border-color:rgba(122,158,142,0.3)';
   butlerAv.innerHTML='🎩';
   avw.appendChild(butlerAv);
   hdr.appendChild(avw);
