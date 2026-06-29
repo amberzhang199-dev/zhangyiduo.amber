@@ -1360,11 +1360,6 @@ function renderChat(){
   leftBtns.appendChild(camBtn);
   leftBtns.appendChild(imgInput);
 
-  /* 喂养 Plan 入口按钮 */
-  var planBtn=el('button','ib gh');planBtn.title='喂养规划';
-  planBtn.innerHTML='<span style="font-size:14px">\uD83D\uDCB0</span>';
-  planBtn.onclick=function(){showFeedingPlanPanel(pets);};
-  leftBtns.appendChild(planBtn);
 
   ibar.appendChild(leftBtns);
 
@@ -2513,12 +2508,12 @@ function showBudgetPanel(pets,defaultPet){
   function buildPage2(budget){
     page2.innerHTML='';
 
-    /* 标题栏 */
+    /* ── 标题栏 ── */
     var hdr2=document.createElement('div');
-    hdr2.style.cssText='flex-shrink:0;padding:16px 18px 10px;display:flex;align-items:center;justify-content:space-between';
+    hdr2.style.cssText='flex-shrink:0;padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between';
     var backBtn=document.createElement('button');
     backBtn.style.cssText='padding:6px 12px;border-radius:10px;background:rgba(74,62,61,0.06);color:#9A918A;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:.18s';
-    backBtn.innerHTML='修改预算';
+    backBtn.textContent='修改预算';
     backBtn.onclick=function(){slider.style.transform='translateX(0)';};
     var budgetTag=document.createElement('p');
     budgetTag.style.cssText='font-size:12px;font-weight:800;color:#FF8E53';
@@ -2532,40 +2527,41 @@ function showBudgetPanel(pets,defaultPet){
     hdr2.appendChild(backBtn);hdr2.appendChild(budgetTag);hdr2.appendChild(closeBtn2);
     page2.appendChild(hdr2);
 
-    var divL=document.createElement('div');
-    divL.style.cssText='height:1px;background:linear-gradient(90deg,transparent,rgba(74,62,61,0.08),transparent);margin:0 16px 2px;flex-shrink:0';
-    page2.appendChild(divL);
+    /* ── 品类标签栏 ── */
+    var catCfg=[
+      {key:'all', icon:'✨', label:'全部', bg:'rgba(74,62,61,0.06)', activeBg:'linear-gradient(135deg,rgba(240,170,120,0.2),rgba(240,170,120,0.1))', color:'#C0B4AA', activeColor:'#D98A58'},
+      {key:'food',icon:'🍱',label:'饮食',bg:'rgba(74,62,61,0.06)',activeBg:'rgba(240,170,120,0.15)',color:'#C0B4AA',activeColor:'#D98A58'},
+      {key:'toy', icon:'🎈',label:'玩乐',bg:'rgba(74,62,61,0.06)',activeBg:'rgba(122,158,142,0.15)',color:'#C0B4AA',activeColor:'#5C8070'},
+      {key:'supply',icon:'📦',label:'用品',bg:'rgba(74,62,61,0.06)',activeBg:'rgba(160,140,200,0.15)',color:'#C0B4AA',activeColor:'#7868A0'}
+    ];
+    var activeTab='all';
 
-    /* 推荐列表 */
+    var tabRow=document.createElement('div');
+    tabRow.style.cssText='display:flex;gap:6px;padding:0 14px 10px;flex-shrink:0';
+
     var recScroll=document.createElement('div');
-    recScroll.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;padding:10px 14px 24px';
+    recScroll.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;padding:4px 14px 24px';
 
-    var skus=getSkusByBudget(activePet,budget);
-    if(!skus.length){
-      var empty=document.createElement('p');
-      empty.style.cssText='font-size:11px;color:#C0B4AA;text-align:center;padding:30px 0';
-      empty.textContent='预算内暂无匹配商品，可返回调高预算 ~';
-      recScroll.appendChild(empty);
-    }else{
-      var sep=document.createElement('div');
-      sep.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
-      sep.innerHTML='<div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(74,62,61,0.08))"></div>'
-        +'<span style="font-size:9.5px;color:#C8C0B8;font-weight:600;white-space:nowrap">🐾 '+activePet.name+' 的推荐好物 🐾</span>'
-        +'<div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(74,62,61,0.08),transparent)"></div>';
-      recScroll.appendChild(sep);
+    var allSkus=getSkusByBudget(activePet,budget);
+    var catCardCfg={food:{icon:'🍱',label:'饮食',bg:'rgba(240,170,120,0.12)',color:'#D98A58'},toy:{icon:'🎈',label:'玩乐',bg:'rgba(122,158,142,0.12)',color:'#5C8070'},supply:{icon:'📦',label:'用品',bg:'rgba(160,140,200,0.1)',color:'#7868A0'}};
 
-      var catCfg={food:{icon:'🍱',label:'饮食',bg:'rgba(240,170,120,0.12)',color:'#D98A58'},toy:{icon:'🎈',label:'玩乐',bg:'rgba(122,158,142,0.12)',color:'#5C8070'},supply:{icon:'📦',label:'用品',bg:'rgba(160,140,200,0.1)',color:'#7868A0'}};
-
+    function renderSkuList(filterCat){
+      recScroll.innerHTML='';
+      var skus=filterCat==='all'?allSkus:allSkus.filter(function(s){return s.cat===filterCat;});
+      if(!skus.length){
+        var empty=document.createElement('p');
+        empty.style.cssText='font-size:11px;color:#C0B4AA;text-align:center;padding:30px 0';
+        empty.textContent='预算内暂无匹配商品，可返回调高预算 ~';
+        recScroll.appendChild(empty);return;
+      }
       skus.forEach(function(sku){
-        var cfg=catCfg[sku.cat]||catCfg.food;
+        var cfg=catCardCfg[sku.cat]||catCardCfg.food;
         var card=document.createElement('div');
         card.style.cssText='background:linear-gradient(135deg,#FFFDF7,#FFF8EC);border-radius:20px;padding:14px 14px 12px;margin-bottom:10px;box-shadow:0 6px 20px rgba(74,62,61,0.08),0 2px 6px rgba(74,62,61,0.04);transition:all .2s cubic-bezier(.34,1.56,.64,1);overflow:hidden;position:relative';
         var paw=document.createElement('div');paw.style.cssText='position:absolute;right:10px;bottom:6px;font-size:22px;opacity:.04;pointer-events:none;transform:rotate(15deg)';paw.textContent='🐾';card.appendChild(paw);
-
         var tagEl=document.createElement('div');
         tagEl.style.cssText='display:inline-flex;align-items:center;gap:3px;background:'+cfg.bg+';color:'+cfg.color+';font-size:9px;font-weight:800;padding:3px 8px;border-radius:99px;margin-bottom:9px';
         tagEl.innerHTML=cfg.icon+' '+cfg.label;card.appendChild(tagEl);
-
         var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px';
         var ico=document.createElement('div');ico.style.cssText='width:44px;height:44px;background:linear-gradient(135deg,#FFF0DC,#FFE4C0);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 3px 8px rgba(223,160,110,0.15)';ico.textContent=activePet.species==='cat'?'🐱':'🐶';
         var inf=document.createElement('div');inf.style.cssText='flex:1;min-width:0';
@@ -2573,9 +2569,8 @@ function showBudgetPanel(pets,defaultPet){
           +'<p style="font-size:9px;color:#C8C0B8">'+sku.brand+(sku.weight?'\xa0\xB7\xa0'+sku.weight:'')+'</p>';
         var priceEl=document.createElement('p');priceEl.style.cssText='font-size:20px;font-weight:900;color:#FF8E53;flex-shrink:0;letter-spacing:-.5px;line-height:1';priceEl.textContent='\xa5'+sku.price;
         row.appendChild(ico);row.appendChild(inf);row.appendChild(priceEl);card.appendChild(row);
-
         var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:7px;margin-top:10px';
-        function mkBtn(txt,bg,color,shadow,border){
+        function mkBtn2(txt,bg,color,shadow,border){
           var b=document.createElement('button');
           b.style.cssText='flex:1;padding:9px 0;border-radius:14px;border:'+(border||'none')+';background:'+bg+';color:'+color+';font-size:11px;font-weight:700;cursor:pointer;box-shadow:'+shadow+';transition:all .22s cubic-bezier(.34,1.56,.64,1)';
           b.textContent=txt;
@@ -2584,19 +2579,39 @@ function showBudgetPanel(pets,defaultPet){
           b.addEventListener('mouseleave',function(){b.style.transform='scale(1)';b.style.filter='';});
           return b;
         }
-        var cartBtn=mkBtn('一键加购','rgba(240,170,120,0.12)','#D98A58','0 2px 8px rgba(223,160,110,0.1)','1.5px solid rgba(240,170,120,0.35)');
+        var cartBtn=mkBtn2('一键加购','rgba(240,170,120,0.12)','#D98A58','0 2px 8px rgba(223,160,110,0.1)','1.5px solid rgba(240,170,120,0.35)');
         cartBtn.onclick=function(){cartBtn.textContent='✔ 已加入';cartBtn.style.background='rgba(122,158,142,0.12)';cartBtn.style.color='#5C8070';cartBtn.style.borderColor='rgba(122,158,142,0.3)';setTimeout(function(){cartBtn.textContent='一键加购';cartBtn.style.background='rgba(240,170,120,0.12)';cartBtn.style.color='#D98A58';cartBtn.style.borderColor='rgba(240,170,120,0.35)';},1600);};
-        var buyBtn=mkBtn('京东下单','linear-gradient(135deg,#F0B87A,#E09858)','#fff','0 4px 12px rgba(223,160,110,0.22)');
+        var buyBtn=mkBtn2('京东下单','linear-gradient(135deg,#F0B87A,#E09858)','#fff','0 4px 12px rgba(223,160,110,0.22)');
         buyBtn.onclick=function(){buyBtn.textContent='跳转中…';setTimeout(function(){buyBtn.textContent='京东下单';},1200);};
         btnRow.appendChild(cartBtn);btnRow.appendChild(buyBtn);card.appendChild(btnRow);
-
         card.onmouseenter=function(){card.style.transform='translateY(-3px)';card.style.boxShadow='0 10px 28px rgba(74,62,61,0.11),0 3px 8px rgba(74,62,61,0.05)';};
         card.onmouseleave=function(){card.style.transform='';card.style.boxShadow='0 6px 20px rgba(74,62,61,0.08),0 2px 6px rgba(74,62,61,0.04)';};
         recScroll.appendChild(card);
       });
     }
+
+    /* 渲染标签 */
+    catCfg.forEach(function(c){
+      var tab=document.createElement('div');
+      tab.style.cssText='flex:1;text-align:center;padding:7px 0;border-radius:12px;background:'+(c.key===activeTab?c.activeBg:c.bg)+';color:'+(c.key===activeTab?c.activeColor:c.color)+';font-size:11px;font-weight:700;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:'+(c.key===activeTab?'0 3px 10px rgba(74,62,61,0.08)':'none');
+      tab.innerHTML=c.icon+' '+c.label;
+      tab.onclick=function(){
+        activeTab=c.key;
+        tabRow.querySelectorAll('div').forEach(function(t,i){
+          var cc=catCfg[i];
+          t.style.background=cc.key===activeTab?cc.activeBg:cc.bg;
+          t.style.color=cc.key===activeTab?cc.activeColor:cc.color;
+          t.style.boxShadow=cc.key===activeTab?'0 3px 10px rgba(74,62,61,0.08)':'none';
+        });
+        renderSkuList(activeTab);
+      };
+      tabRow.appendChild(tab);
+    });
+    page2.appendChild(tabRow);
     page2.appendChild(recScroll);
+    renderSkuList('all');
   }
+
 
   slider.appendChild(page1);
   slider.appendChild(page2);
