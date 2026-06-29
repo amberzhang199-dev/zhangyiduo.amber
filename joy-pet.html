@@ -2401,12 +2401,13 @@ function showBudgetPanel(pets,defaultPet){
   mask.style.cssText='position:fixed;inset:0;background:rgba(74,62,61,0.38);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
 
   var panel=document.createElement('div');
-  var _ph=Math.min(window.innerHeight*0.82,580);
+  var _pw=Math.min(window.innerWidth-40,350);
+  var _ph=Math.min(_pw,window.innerHeight*0.82);
   panel.style.cssText=[
     'background:#FAF6F0',
     'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\'%3E%3Cfilter id=\'f\'%3E%3CfeTurbulence baseFrequency=\'.5\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'80\' height=\'80\' filter=\'url(%23f)\' opacity=\'.018\'/%3E%3C/svg%3E")',
     'border-radius:28px',
-    'width:100%',
+    'width:'+_pw+'px',
     'max-width:350px',
     'height:'+_ph+'px',
     'display:flex',
