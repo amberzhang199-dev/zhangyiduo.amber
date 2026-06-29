@@ -2466,49 +2466,46 @@ function showBadgePreview(badgeName,stickerKey,count,pet,allPets,unlocked){
 }
 
 function getStickerSVG(key,size,unlocked,species){
-  /* 圆形 pin 风格：外圈锯齿 + 内圆主图 + 宠物形象 */
   var s=size||54;
   var isDog=(species==='dog');
   var gray=!unlocked;
-  var defs=gray?BADGE_PIN_GRAY:( isDog?BADGE_PIN_DOG:BADGE_PIN_CAT);
-  var d=defs[key]||defs['bath'];
-  var outerColor=gray?'#C8C4C0':d.outer;
-  var innerColor=gray?'#E0DCD8':d.inner;
-  var accentColor=gray?'#B0ABA6':d.accent;
+  var palette=gray?null:(isDog?(BADGE_PIN_DOG[key]||BADGE_PIN_DOG.bath):(BADGE_PIN_CAT[key]||BADGE_PIN_CAT.bath));
+  var outerColor=gray?'#C8C4C0':palette.outer;
+  var innerColor=gray?'#E8E4E0':palette.inner;
 
-  /* 锯齿外圈：用多段弧形拼接 */
+  /* 锯齿外圈：用 24 段简单折线 */
   var teeth='';
-  var n=24,cx=50,cy=50,R=48,r=42;
-  for(var i=0;i<n;i++){
-    var a1=2*Math.PI*i/n-Math.PI/2;
-    var a2=2*Math.PI*(i+0.5)/n-Math.PI/2;
-    var a3=2*Math.PI*(i+1)/n-Math.PI/2;
-    teeth+=(i===0?'M':'L')+(cx+R*Math.cos(a1))+','+(cy+R*Math.sin(a1))
-      +' Q'+(cx+(R+4)*Math.cos(a2))+','+(cy+(R+4)*Math.sin(a2))+' '
-      +(cx+R*Math.cos(a3))+','+(cy+R*Math.sin(a3));
+  var n=24,cx=50,cy=50,Ro=47,Ri=42;
+  for(var ti=0;ti<n;ti++){
+    var a1=+(2*Math.PI*ti/n-Math.PI/2).toFixed(6);
+    var a2=+(2*Math.PI*(ti+0.5)/n-Math.PI/2).toFixed(6);
+    var a3=+(2*Math.PI*(ti+1)/n-Math.PI/2).toFixed(6);
+    var x1=+(cx+Ri*Math.cos(a1)).toFixed(1);
+    var y1=+(cy+Ri*Math.sin(a1)).toFixed(1);
+    var x2=+(cx+Ro*Math.cos(a2)).toFixed(1);
+    var y2=+(cy+Ro*Math.sin(a2)).toFixed(1);
+    var x3=+(cx+Ri*Math.cos(a3)).toFixed(1);
+    var y3=+(cy+Ri*Math.sin(a3)).toFixed(1);
+    teeth+=(ti===0?'M':' L')+x1+','+y1+' L'+x2+','+y2+' L'+x3+','+y3;
   }
-  teeth+='Z';
+  teeth+=' Z';
 
-  var svg='<svg width="'+s+'" height="'+s+'" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
-    /* 白色模切边 */
+  var body=isDog?drawDogBody(key,palette?palette.accent:'#B0ABA6',innerColor,gray)
+                :drawCatBody(key,palette?palette.accent:'#B0ABA6',innerColor,gray);
+
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
     +'<circle cx="50" cy="50" r="50" fill="#fff"/>'
-    /* 锯齿外圈 */
     +'<path d="'+teeth+'" fill="'+outerColor+'"/>'
-    /* 内圆 */
-    +'<circle cx="50" cy="50" r="38" fill="'+innerColor+'"/>'
-    /* 方格纹理 */
-    +'<line x1="0" y1="30" x2="100" y2="30" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    +'<line x1="0" y1="50" x2="100" y2="50" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    +'<line x1="0" y1="70" x2="100" y2="70" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    +'<line x1="30" y1="0" x2="30" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    +'<line x1="50" y1="0" x2="50" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    +'<line x1="70" y1="0" x2="70" y2="100" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>'
-    /* 宠物形象 */
-    +(isDog?drawDogBody(key,accentColor,innerColor,gray):drawCatBody(key,accentColor,innerColor,gray))
-    /* 小星星装饰 */
-    +(gray?'':('<text x="20" y="56" font-size="8" opacity=".5">★</text><text x="74" y="56" font-size="8" opacity=".5">★</text>'))
+    +'<circle cx="50" cy="50" r="37" fill="'+innerColor+'"/>'
+    +'<line x1="13" y1="30" x2="87" y2="30" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +'<line x1="13" y1="50" x2="87" y2="50" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +'<line x1="13" y1="70" x2="87" y2="70" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +'<line x1="30" y1="13" x2="30" y2="87" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +'<line x1="50" y1="13" x2="50" y2="87" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +'<line x1="70" y1="13" x2="70" y2="87" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>'
+    +body
+    +(gray?'':'<text x="20" y="54" font-size="7" opacity="0.45" fill="#888">★</text><text x="74" y="54" font-size="7" opacity="0.45" fill="#888">★</text>')
     +'</svg>';
-  return svg;
 }
 
 /* 狗狗形象绘制 - 根据徽章类型显示对应动作/道具 */
