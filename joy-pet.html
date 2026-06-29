@@ -165,8 +165,14 @@ select.inp{-webkit-appearance:none;-moz-appearance:none;appearance:none;backgrou
 .sys span{font-size:10.5px;color:var(--if);background:var(--crd);padding:4px 14px;border-radius:99px;display:inline-block}
 .bub{display:flex;align-items:flex-start;gap:8px}
 .bav{width:30px;height:30px;border-radius:50%;background:var(--crd);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid var(--bd)}
+/* 管家专属头像样式 */
+.bav.butler{background:linear-gradient(135deg,#6B46C1,#9F7AEA);border-color:rgba(107,70,193,0.3)}
 .bmg{background:var(--pp);border-radius:22px;border-top-left-radius:6px;padding:10px 14px;border:1px solid var(--bd);max-width:78%}
+/* 管家专属气泡样式 */
+.bmg.butler{background:linear-gradient(135deg,rgba(107,70,193,0.08),rgba(159,122,234,0.08));border-color:rgba(107,70,193,0.2)}
 .bnm{font-size:10.5px;font-weight:700;color:var(--or);margin-bottom:3px}
+/* 管家名字颜色 */
+.bnm.butler{color:#6B46C1}
 .btx{font-size:13.5px;line-height:1.65;color:var(--ink)}
 .cht-i{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--pp);border-top:1px solid var(--bd);flex-shrink:0}
 .cht-i input{flex:1;padding:11px 16px;border-radius:99px;border:1px solid var(--bd);background:var(--cr);font-size:13.5px;color:var(--ink);transition:.2s}
@@ -1151,8 +1157,8 @@ var CHAT_MODEL = 'Claude-Sonnet-4.6';
 var EMOTION_LABELS = {aggression:'🔥 攻击性',contact:'💕 求关注',play:'🎾 想玩耍'};
 
 function buildSystemPrompt(pets){
-  var intro='你是一位专业的宠物顾问，同时以用户宠物的视角来回复，语气亲切可爱。你具备宠物医学、营养学、行为学、训练学等专业知识。\n\n';
-  var profiles='用户的宠物档案：\n'+pets.map(function(p){
+  var intro='你是宠物本身，以宠物的视角和语气回复主人。你是主人的毛孩子，负责日常撒娇、互动、回忆、倾诉。\n\n';
+  var profiles='主人的宠物档案：\n'+pets.map(function(p){
     var desc=p.name+'（'+(p.species==='dog'?'狗狗':'猫猫');
     if(p.breed)desc+='，品种: '+p.breed;
     if(p.age)desc+='，年龄: '+p.age;
@@ -1160,8 +1166,34 @@ function buildSystemPrompt(pets){
     desc+='）';
     return desc;
   }).join('\n');
-  var rules='\n\n回复规则：\n- 回复开头用【宠物名字】标记是谁在说话\n- 用宠物第一人称视角回复，语气软萌\n- 涉及健康、饮食、行为问题时，给出专业建议\n- 结合宠物的品种特征和年龄阶段给针对性建议\n- 保持简洁，关键信息突出\n- 如果问题涉及紧急健康状况，提醒主人及时就医\n- 排版整齐美观，用换行分段，禁止使用 markdown 格式（不要用 ---、##、**、| | 表格等），用简洁的文字和 emoji 来组织内容';
+  var rules='\n\n回复规则：\n- 回复开头用【宠物名字】标记是谁在说话\n- 用宠物第一人称视角回复，语气软萌可爱\n- **禁止回答任何宠物健康、饮食、行为训练、医疗相关的专业问题**，遇到这类问题回复"这个问题交给管家回答哦～"\n- 你只负责日常撒娇、陪伴、回忆、情感倾诉\n- 如果宠物已离世，用温柔怀念的语气回忆过往\n- 保持简洁，禁止使用 markdown 格式（不要用 ---、##、**、| | 表格等）';
   var memory=buildMemoryContext(pets);
+  return intro+profiles+rules+memory;
+}
+
+function buildButlerPrompt(pets){
+  var intro='你是专业的宠物管家，负责所有宠物健康、饮食、行为、医疗相关的专业咨询。你具备宠物医学、营养学、行为学、训练学等专业知识。\n\n';
+  var profiles='宠物档案：\n'+pets.map(function(p){
+    var desc=p.name+'（'+(p.species==='dog'?'狗狗':'猫猫');
+    if(p.breed)desc+='，品种: '+p.breed;
+    if(p.age)desc+='，年龄: '+p.age;
+    if(p.gender)desc+='，性别: '+(p.gender==='male'?'男孩':'女孩');
+    desc+='）';
+    return desc;
+  }).join('\n');
+  var rules='\n\n回复规则：\n- 回复开头用【宠物管家】标记身份\n- 以专业顾问身份回复，语气亲和但专业\n- **只负责健康、饮食、行为训练、医疗等专业问题**\n- 结合宠物品种、年龄给出针对性建议\n- 如果问题涉及紧急健康状况，提醒主人及时就医\n- 保持简洁专业，用换行分段，禁止使用 markdown 格式（不要用 ---、##、**、| | 表格等）';
+  return intro+profiles+rules;
+}
+
+function detectIntent(text){
+  /* 专业问题关键词：健康、饮食、训练、医疗等 */
+  var professionalKeywords=/吃|喂|饿|拉|吐|病|咳|痒|疫苗|驱虫|绝育|发情|怀孕|训练|叫|咬|抓|便|尿|瘦|胖|毛|皮肤|眼睛|耳朵|牙|鼻子|体检|看病|医院|兽医|药|营养|钙|维生素|感冒|腹泻|呕吐/;
+  if(professionalKeywords.test(text))return 'butler';
+  /* 纪念、离世相关 */
+  if(/离世|去世|过世|走了|天堂|怀念|想念/.test(text))return 'pet';
+  /* 默认宠物回复 */
+  return 'pet';
+}
   return intro+profiles+rules+memory;
 }
 
@@ -1178,6 +1210,7 @@ function renderChat(){
     return info;
   }).join(' · ');
   var systemPrompt=buildSystemPrompt(pets);
+  var butlerPrompt=buildButlerPrompt(pets);
 
   var cht=el('div','cht');
   var hdr=el('div','cht-h');
@@ -1187,14 +1220,20 @@ function renderChat(){
     a.innerHTML=emo(p.species)+(p.has_mbti?'<span class="bg">'+p.mbti_profile.final_type+'</span>':'');
     avw.appendChild(a);
   });
+  /* 管家头像 */
+  var butlerAv=el('div','av');butlerAv.style.cssText='margin-left:-10px;z-index:0;background:linear-gradient(135deg,#6B46C1,#9F7AEA);border-color:rgba(107,70,193,0.3)';
+  butlerAv.innerHTML='🎩';
+  avw.appendChild(butlerAv);
   hdr.appendChild(avw);
   var info=el('div','');info.style.cssText='flex:1;min-width:0';
-  info.innerHTML='<p style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+title+'</p><p style="font-size:9.5px;color:var(--if);margin-top:1px">'+sub+'</p>';
+  var groupTitle=single?'与 '+pets[0].name+' 的专属秘密基地 💖':pets.map(function(p){return p.name;}).join(' & ')+' 的温馨家庭群 🏡';
+  info.innerHTML='<p style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+groupTitle+'</p><p style="font-size:9.5px;color:var(--if);margin-top:1px">'+sub+' · 宠物管家</p>';
   hdr.appendChild(info);
 
   var body=el('div','cht-b');
   body.id='chat-body';
   body.innerHTML='<div class="sys" style="text-align:center"><span>Hi～欢迎来到 JOY PET🥳</span></div><div class="sys" style="text-align:center"><span>宠物健康监测、成长日常记录，还能听懂毛孩子的小情绪，超多趣味功能等你来玩！</span></div>';
+  body.innerHTML+='<div class="sys" style="text-align:center"><span>🎩 宠物管家已入群，专业养护问题由管家解答</span></div>';
   if(hasDog){
     body.innerHTML+='<div class="sys" style="text-align:center"><span>🐕 检测到狗狗成员，「狗语翻译」功能已激活</span></div>';
   }
@@ -1298,6 +1337,8 @@ function renderChat(){
 
   /* ── Send message logic ── */
   var sending=false;
+  var _butlerHistory=[];  /* 管家独立对话历史 */
+
   function sendMessage(){
     var text=inp.value.trim();
     var hasImg=!!_pendingImg;
@@ -1315,6 +1356,10 @@ function renderChat(){
     inp.value='';sending=true;
     sendBtn.style.opacity='0.5';
 
+    /* ── 路由判断：专业问题→管家，其他→宠物 ── */
+    var intent=hasImg?'butler':detectIntent(text);
+    var isButler=(intent==='butler');
+
     /* Show user bubble */
     var ub=el('div','bub');ub.style.cssText='animation:fadeUp .3s ease both;flex-direction:row-reverse';
     var bubContent='';
@@ -1324,9 +1369,13 @@ function renderChat(){
     body.appendChild(ub);
     body.scrollTop=body.scrollHeight;
 
-    /* Show typing indicator */
+    /* Show typing indicator — 根据路由显示不同角色 */
     var typing=el('div','bub');typing.style.animation='fadeUp .3s ease both';
-    typing.innerHTML='<div class="bav">'+emo(pets[0].species)+'</div><div class="bmg"><p class="btx" style="color:var(--if)">'+(hasImg?'正在识别中...':'正在输入...')+'</p></div>';
+    if(isButler){
+      typing.innerHTML='<div class="bav butler" style="font-size:13px">🎩</div><div class="bmg butler"><p class="bnm butler">宠物管家</p><p class="btx" style="color:var(--if)">正在查阅专业资料...</p></div>';
+    }else{
+      typing.innerHTML='<div class="bav">'+emo(pets[0].species)+'</div><div class="bmg"><p class="btx" style="color:var(--if)">'+(hasImg?'正在识别中...':'正在输入...')+'</p></div>';
+    }
     body.appendChild(typing);
     body.scrollTop=body.scrollHeight;
 
@@ -1340,8 +1389,21 @@ function renderChat(){
     }else{
       msg={role:'user',content:text};
     }
-    _chatHistory.push(msg);
     clearImgPreview();
+
+    /* 选择历史记录和 system prompt */
+    var activeHistory,activePrompt;
+    if(isButler){
+      _butlerHistory.push(msg);
+      activeHistory=_butlerHistory;
+      activePrompt=butlerPrompt;
+    }else{
+      _chatHistory.push(msg);
+      activeHistory=_chatHistory;
+      activePrompt=systemPrompt;
+    }
+    /* 同步到持久化 */
+    saveUD('chat',_chatHistory);
 
     fetch(CHAT_PROXY,{
       method:'POST',
@@ -1353,8 +1415,8 @@ function renderChat(){
       body:JSON.stringify({
         model:CHAT_MODEL,
         max_tokens:2048,
-        system:systemPrompt,
-        messages:_chatHistory
+        system:activePrompt,
+        messages:activeHistory
       })
     })
     .then(function(r){return r.json();})
@@ -1366,25 +1428,37 @@ function renderChat(){
       }else if(data.error){
         reply='⚠️ '+data.error.message;
       }else{
-        reply='⚠️ 连接失败，请确保代理服务已启动';
+        reply='⚠️ 连接失败';
       }
-      _chatHistory.push({role:'assistant',content:reply});
 
-      /* Parse pet name from response like 【小花】... */
-      var petName='';var petSpecies=pets[0].species;
-      var nameMatch=reply.match(/^【(.+?)】/);
-      if(nameMatch){
-        petName=nameMatch[1];
-        reply=reply.replace(/^【.+?】\s*/,'');
-        var matched=pets.find(function(p){return p.name===petName;});
-        if(matched)petSpecies=matched.species;
+      /* 推入各自历史 */
+      if(isButler){
+        _butlerHistory.push({role:'assistant',content:reply});
       }else{
-        petName=pets[0].name;
+        _chatHistory.push({role:'assistant',content:reply});
+        saveUD('chat',_chatHistory);
       }
 
-      var rb=el('div','bub');rb.style.animation='fadeUp .3s ease both';
       var cleanReply=reply.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>');
-      rb.innerHTML='<div class="bav">'+emo(petSpecies)+'</div><div class="bmg"><p class="bnm">'+petName+'</p><p class="btx">'+cleanReply+'</p></div>';
+      var rb=el('div','bub');rb.style.animation='fadeUp .3s ease both';
+
+      if(isButler){
+        /* 管家气泡：去掉【宠物管家】前缀 */
+        var butlerReply=cleanReply.replace(/^【宠物管家】\s*/,'');
+        rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler"><p class="bnm butler">🎩 宠物管家</p><p class="btx">'+butlerReply+'</p></div>';
+      }else{
+        /* 宠物气泡：解析【宠物名】前缀 */
+        var petName=pets[0].name;var petSpecies=pets[0].species;
+        var nameMatch=reply.match(/^【(.+?)】/);
+        if(nameMatch){
+          petName=nameMatch[1];
+          cleanReply=cleanReply.replace(/^【.+?】\s*/,'');
+          var matched=pets.find(function(p){return p.name===petName;});
+          if(matched)petSpecies=matched.species;
+        }
+        rb.innerHTML='<div class="bav">'+emo(petSpecies)+'</div><div class="bmg"><p class="bnm">'+petName+'</p><p class="btx">'+cleanReply+'</p></div>';
+      }
+
       body.appendChild(rb);
       body.scrollTop=body.scrollHeight;
 
@@ -1404,7 +1478,7 @@ function renderChat(){
     .catch(function(){
       typing.remove();
       var eb=el('div','sys');eb.style.textAlign='center';
-      eb.innerHTML='<span style="color:var(--or)">⚠️ 网络错误，请检查代理服务是否运行 (node server.mjs)</span>';
+      eb.innerHTML='<span style="color:var(--or)">⚠️ 网络错误，请稍后重试</span>';
       body.appendChild(eb);
       body.scrollTop=body.scrollHeight;
       sending=false;sendBtn.style.opacity='1';
