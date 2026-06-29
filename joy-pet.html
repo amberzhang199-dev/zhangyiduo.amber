@@ -173,6 +173,22 @@ select.inp{-webkit-appearance:none;-moz-appearance:none;appearance:none;backgrou
 .bnm{font-size:10.5px;font-weight:700;color:var(--or);margin-bottom:3px}
 /* 管家名字颜色 */
 .bnm.butler{color:#6B46C1}
+/* 问诊卡片 */
+.diag-card{margin-top:10px;background:rgba(107,70,193,0.05);border:1px solid rgba(107,70,193,0.2);border-radius:14px;padding:10px 12px;max-width:100%}
+.diag-title{font-size:12px;color:#6B46C1;font-weight:600;margin-bottom:8px;line-height:1.5}
+.diag-options{display:flex;flex-direction:column;gap:6px}
+.diag-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1.5px solid rgba(107,70,193,0.2);background:#fff;cursor:pointer;transition:.15s;user-select:none}
+.diag-opt:active{transform:scale(.98)}
+.diag-opt.selected{border-color:#6B46C1;background:rgba(107,70,193,0.08)}
+.diag-opt-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(107,70,193,0.35);flex-shrink:0;transition:.15s;display:flex;align-items:center;justify-content:center}
+.diag-opt.selected .diag-opt-dot{background:#6B46C1;border-color:#6B46C1}
+.diag-opt.selected .diag-opt-dot::after{content:'✓';font-size:9px;color:#fff;font-weight:700}
+.diag-opt-label{font-size:12.5px;color:#4A3E3D;line-height:1.4;flex:1}
+.diag-opt.selected .diag-opt-label{color:#6B46C1;font-weight:600}
+.diag-none{padding:8px 10px;border-radius:10px;border:1.5px dashed rgba(107,70,193,0.2);background:transparent;cursor:pointer;font-size:12px;color:#9F7AEA;text-align:center;transition:.15s}
+.diag-none:active{transform:scale(.98)}
+.diag-submit{margin-top:8px;width:100%;padding:9px;border-radius:10px;background:linear-gradient(135deg,#6B46C1,#9F7AEA);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:.15s}
+.diag-submit:active{transform:scale(.98);filter:brightness(.95)}
 .btx{font-size:13.5px;line-height:1.65;color:var(--ink)}
 .cht-i{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--pp);border-top:1px solid var(--bd);flex-shrink:0}
 .cht-i input{flex:1;padding:11px 16px;border-radius:99px;border:1px solid var(--bd);background:var(--cr);font-size:13.5px;color:var(--ink);transition:.2s}
@@ -1186,12 +1202,21 @@ function buildButlerPrompt(pets){
     +'- 回复开头用【宠物管家】标记身份\n'
     +'- 尊称主人为"XXX（宠物名）家长"，语气恭敬贴心\n'
     +'- 基础咨询：分点清晰给出完整可落地方案\n'
-    +'- 宠物异常症状：先安抚主人情绪，区分轻重急症，说明居家护理方式，明确哪些情况必须立即送医\n'
+    +'- 宠物异常症状：需要收集症状信息时，使用问诊卡片格式（见下方说明），先安抚，再收集信息，再区分轻重给出建议\n'
     +'- 多宠提问：兼顾每只宠物差异，分开说明要点\n'
     +'- 主人倾诉烦恼：先共情，再给出改善办法\n'
     +'- 语言通俗易懂，不使用生硬专业术语\n'
     +'- 不夸大风险，不推脱问题\n'
-    +'- 用换行分段，禁止 markdown 格式（不要用 ---、##、**、| | 表格等）';
+    +'- 用换行分段，禁止 markdown 格式（不要用 ---、##、**、| | 表格等）\n\n'
+    +'问诊卡片格式说明：\n'
+    +'当需要向主人收集症状信息时（如宠物生病、行为异常、消化问题等），在文字安抚后，紧接着输出如下格式的问诊卡片，每行一个选项，用 [DIAG_TITLE] 标记问题标题，用 [DIAG_ITEM] 标记每个选项，用 [/DIAG] 结束：\n'
+    +'示例：\n'
+    +'[DIAG_TITLE]请回忆一下，最近有没有这些情况：[/DIAG_TITLE]\n'
+    +'[DIAG_ITEM]换了新粮或吃了不寻常的东西[/DIAG_ITEM]\n'
+    +'[DIAG_ITEM]喝了不干净的水[/DIAG_ITEM]\n'
+    +'[DIAG_ITEM]最近有驱虫或打疫苗[/DIAG_ITEM]\n'
+    +'[/DIAG]\n'
+    +'问诊卡片后可以继续输出文字。每次问诊最多6个选项，选项简洁（15字以内）。';
   return intro+profiles+rules;
 }
 
@@ -1451,9 +1476,41 @@ function renderChat(){
       var rb=el('div','bub');rb.style.animation='fadeUp .3s ease both';
 
       if(isButler){
-        /* 管家气泡：去掉【宠物管家】前缀 */
-        var butlerReply=cleanReply.replace(/^【宠物管家】\s*/,'');
-        rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler"><p class="bnm butler">🎩 宠物管家</p><p class="btx">'+butlerReply+'</p></div>';
+        /* 管家气泡：解析问诊卡片 [DIAG_TITLE]...[DIAG_ITEM]...[/DIAG] */
+        var rawReply=reply.replace(/^【宠物管家】\s*/,'');
+        var diagMatch=rawReply.match(/\[DIAG_TITLE\]([\s\S]*?)\[\/DIAG_TITLE\]([\s\S]*?)\[\/DIAG\]/);
+        if(diagMatch){
+          /* 拆分卡片前文字、问诊块、卡片后文字 */
+          var beforeDiag=rawReply.slice(0,rawReply.indexOf('[DIAG_TITLE]'));
+          var afterDiag=rawReply.slice(rawReply.indexOf('[/DIAG]')+7);
+          var diagTitle=diagMatch[1].trim();
+          var itemMatches=[...rawReply.matchAll(/\[DIAG_ITEM\]([\s\S]*?)\[\/DIAG_ITEM\]/g)];
+          var diagItems=itemMatches.map(function(m){return m[1].trim();});
+
+          var cleanBefore=beforeDiag.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>').trim();
+          var cleanAfter=afterDiag.replace(/</g,'&lt;').replace(/\*\*/g,'').replace(/#{1,6}\s?/g,'').replace(/---/g,'').replace(/\|/g,'').replace(/\n/g,'<br/>').trim();
+
+          rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler" style="max-width:88%"><p class="bnm butler">🎩 宠物管家</p>'
+            +(cleanBefore?'<p class="btx" style="margin-bottom:8px">'+cleanBefore+'</p>':'')
+            +'<div class="diag-card">'
+            +'<p class="diag-title">'+diagTitle.replace(/</g,'&lt;')+'</p>'
+            +'<div class="diag-options">'
+            +diagItems.map(function(item){
+              return '<div class="diag-opt" onclick="this.classList.toggle(\'selected\')">'
+                +'<div class="diag-opt-dot"></div>'
+                +'<span class="diag-opt-label">'+item.replace(/</g,'&lt;')+'</span>'
+                +'</div>';
+            }).join('')
+            +'<div class="diag-none" onclick="this.classList.toggle(\'selected\')">以上都没有</div>'
+            +'</div>'
+            +'<button class="diag-submit" onclick="(function(btn){var card=btn.closest(\'.diag-card\');var selected=[];card.querySelectorAll(\'.diag-opt.selected .diag-opt-label\').forEach(function(l){selected.push(l.textContent);});var noneSelected=card.querySelector(\'.diag-none.selected\');var summary=selected.length>0?\'有以下情况：\'+selected.join(\'、\'):(noneSelected?\'以上情况都没有\':\'没有特别情况\');card.querySelectorAll(\'.diag-opt,.diag-none,.diag-submit\').forEach(function(el){el.style.pointerEvents=\'none\';el.style.opacity=\'.6\';});inp.value=summary;sendMessage();})(this)">提交以上情况</button>'
+            +'</div>'
+            +(cleanAfter?'<p class="btx" style="margin-top:8px">'+cleanAfter+'</p>':'')
+            +'</div>';
+        }else{
+          var butlerReply=cleanReply.replace(/^【宠物管家】\s*/,'');
+          rb.innerHTML='<div class="bav butler">🎩</div><div class="bmg butler"><p class="bnm butler">🎩 宠物管家</p><p class="btx">'+butlerReply+'</p></div>';
+        }
       }else{
         /* 宠物气泡：解析【宠物名】前缀 */
         var petName=pets[0].name;var petSpecies=pets[0].species;
